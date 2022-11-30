@@ -1,0 +1,5 @@
+# ninja log v5
+5	436	6915208560916993	CMakeFiles/CPPMAT.dir/cppmat.cpp.obj	dd02dbca04b97a99
+0	445	6915208561017014	CMakeFiles/CPPMAT.dir/main.cpp.obj	8651111506d7f1c6
+8	590	6915208562457343	CMakeFiles/CPPMAT.dir/paraget.cpp.obj	c352bbc1a8f1bd06
+590	756	6915208564097707	CPPMAT.exe	a1eef10ed2b1ad15
