@@ -520,6 +520,48 @@ vector<vector<double>> CPPMAT::inverse(const vector<vector<double>> &A)
     return inv_A;
 }
 
+// 更改行向量
+vector<vector<double>> CPPMAT::changeRow(const vector<vector<double>>&A,int row, const vector<vector<double>>&B){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    int B_h=B.size();
+    int B_l=B.at(0).size();
+    if(B.size()!=1){
+        cout<<"更改行向量的向量参数大于一行！"<<endl;
+        exit(0);
+    }
+    else if (A_l!=B_l){
+        cout<<"更改行向量的向量和原矩阵列数不一致！"<<endl;
+        exit(0);
+    }
+
+    vector<vector<double>> C=A;
+    C[row-1]=B.at(0);
+    return C;
+}
+
+// 更改列向量
+vector<vector<double>> CPPMAT::changeColumn(const vector<vector<double>>&A,int column, const vector<vector<double>>&B){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    int B_h=B.size();
+    int B_l=B.at(0).size();
+    if(B_l!=1){
+        cout<<"更改列向量的向量参数大于一列！"<<endl;
+        exit(0);
+    }
+    else if(A_h!=B_h){
+        cout<<"更改列向量的向量和原矩阵的行数不一致！"<<endl;
+        exit(0);
+    }
+    vector<vector<double>> C=A;
+    for (int i = 0; i < A_h; ++i) {
+        C[i][column-1]=B[i][0];
+    }
+
+    return C;
+}
+
 void CPPMAT::show_matrix(const vector<vector<double>> &A)
 {
     int h=A.size();

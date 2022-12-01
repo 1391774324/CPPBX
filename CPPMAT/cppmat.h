@@ -31,7 +31,10 @@ public:
     static vector<vector<double>> matrix_overlaying_beside(const vector<vector<double>>&A,const vector<vector<double>>&B);  //矩阵左右拼接
     static vector<vector<double>> trans(const vector<vector<double>> &A);                                                   //矩阵转置
     static vector<vector<double>> inverse(const vector<vector<double>> &A);                                                 //矩阵求逆
+    static vector<vector<double>> changeRow(const vector<vector<double>>&A,int row, const vector<vector<double>>&B);        //更改行向量
+    static vector<vector<double>> changeColumn(const vector<vector<double>>&A,int column, const vector<vector<double>>&B);  //更改列向量
     static void show_matrix(const vector<vector<double>> &A);                                                               //打印矩阵
+
 };
 
 #endif // CPPMAT_H

@@ -19,6 +19,7 @@ public:
 
     static void align_extract(string pipesize, string dataPath1, string dataPath2, string correctPath1, string correctPath2, string outPath1, string outPath2);
     static vector<vector<double>> OpenDataFile(string dataPath,int lineNum);
+    static vector<vector<double>> trip(const vector<vector<double>>&A,const vector<vector<double>>&B,int thre);
 };
 
 #endif // BXTOOLKIT_H

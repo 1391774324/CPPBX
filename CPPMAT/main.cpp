@@ -9,7 +9,7 @@ int main()
 
     string pipesize = "10inch";
     string dataPath1 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat1IN.bin";
-    string dataPath2 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat1IN.bin";
+    string dataPath2 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat2IN.bin";
     string correctPath1 = "";
     string correctPath2 = "";
     string outPath1="";
@@ -27,11 +27,11 @@ int main()
 
 //    cout << "Hello World!" << endl;
 
-//    vector<double> num{1,2,3,4,5,6};
+//    vector<double> num{1,2,3,4,5,6,7,8,9};
 //    vector<vector<double>> myMatrix;
 
 //    myMatrix=CPPMAT::creatmatrix(3,3,num);
-//    CPPMAT::show_matrix(myMatrix);
+//    CPPMAT::show_matrix(CPPMAT::changeRow(myMatrix,1,CPPMAT::getRow(myMatrix,3)));
 
 
     return 0;
