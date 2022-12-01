@@ -1,14 +1,23 @@
 #include <iostream>
 #include "cppmat.h"
 #include "paraget.h"
-
+#include "bxtoolkit.h"
 using namespace std;
 
 int main()
 {
 
-    ParaGet *p = new ParaGet("24inch");
-    cout<<p->propara.zxflag<<endl;
+    string pipesize = "10inch";
+    string dataPath1 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat1IN.bin";
+    string dataPath2 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat1IN.bin";
+    string correctPath1 = "";
+    string correctPath2 = "";
+    string outPath1="";
+    string outPath2="";
+
+    BXToolKit::align_extract(pipesize,dataPath1,dataPath2,correctPath1,correctPath2,outPath1,outPath2);
+
+
 
 
 

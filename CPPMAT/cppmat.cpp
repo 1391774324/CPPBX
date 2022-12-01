@@ -112,6 +112,27 @@ vector<vector<double>> CPPMAT::multiply(const vector<vector<double>>&A,const vec
     return C;
 }
 
+//矩阵点乘A.*B
+vector<vector<double>> CPPMAT::multiply_dot(const vector<vector<double>>&A,const vector<vector<double>>&B){
+    int A_h=A.size();
+    int A_l=A[0].size();
+    int B_h=B.size();
+    int B_l=B[0].size();
+    if((A_l !=B_l)||(A_h!=B_h))
+    {
+        cout<<"两矩阵维数无法点乘"<<endl;
+        exit(0);
+    }
+    vector<vector<double>> C=creatmatrix(A_h,A_l);
+    for (int i = 0; i < A_h; ++i) {
+        for (int j = 0; j < A_h; ++j) {
+            C[i][j]=A[i][j]*B[i][j];
+        }
+    }
+    return C;
+}
+
+
 //矩阵A*num=矩阵B，并返回
 vector<vector<double>> CPPMAT::multiply_num(const vector<vector<double>>&A,double num)
 {
@@ -123,6 +144,175 @@ vector<vector<double>> CPPMAT::multiply_num(const vector<vector<double>>&A,doubl
         for (int j = 0; j < A_l; j++)
         {
             B[i][j]=num*A[i][j];
+        }
+    }
+    return B;
+}
+
+//取子矩阵
+vector<vector<double>> CPPMAT::subMatrix(const vector<vector<double>> &A,int r, int r_step, int c, int c_step){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(r>A_h||r+r_step-1>A_h){
+       cout<<"取子矩阵行数大于原矩阵行数范围！"<<endl;
+       exit(0);
+    }
+    else if(c>A_l||c+c_step-1>A_l){
+       cout<<"取子矩阵列数大于原矩阵列数范围！"<<endl;
+       exit(0);
+    }
+    else if(r<=0||c<=0||r+r_step+1<=0||c+c_step+1<=0){
+        cout<<"取子矩阵行列参数应大于0！"<<endl;
+        exit(0);
+    }
+    else if(r_step==0||c_step==0){
+        cout<<"取子矩阵行列跨度不可等于0！"<<endl;
+        exit(0);
+    }
+
+    vector<vector<double>> B;
+    if(r_step>0){
+        if(c_step>0){
+            for (int i = r; i < r+r_step; ++i) {
+                vector<double> v;
+                for (int j = c; j < c+c_step; ++j) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+        else if(c_step<0){
+            for (int i = r; i < r+r_step; ++i) {
+                vector<double> v;
+                for (int j = c+c_step+1; j <= c; ++j) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+    }
+    else if(r_step<0){
+        if(c_step>0){
+            for (int i = r+r_step+1; i <= r; ++i) {
+                vector<double> v;
+                for (int j = c; j < c+c_step; ++j) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+        else if(c_step<0){
+            for (int i = r+r_step+1; i <= r; ++i) {
+                vector<double> v;
+                for (int j = c+c_step+1; j <= c; ++j) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+    }
+    return B;
+}
+
+
+//取行
+vector<vector<double>> CPPMAT::getRow(const vector<vector<double>>&A, int num){
+    if(num>A.size()){
+        cout<<"取行向量操作超出矩阵最大行数！"<<endl;
+        exit(0);
+    }
+    else if (num<=0){
+        cout<<"取行向量操作参数应大于0！"<<endl;
+        exit(0);
+    }
+    vector<vector<double>> row{A.at(num-1)};
+    return row;
+}
+
+//取多个行向量
+vector<vector<double>> CPPMAT::getRows(const vector<vector<double>>&A, int r,int r_step){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if((r>A_h)||((r+r_step-1)>A_h)){
+        cout<<"取行向量操作超出矩阵最大行数！"<<endl;
+        exit(0);
+    }
+    else if (r<=0||r+r_step+1<=0){
+        cout<<"取行向量操作参数应大于0！"<<endl;
+        exit(0);
+    }
+    else if(r_step==0){
+        cout<<"取行向量行跨度不可为0！"<<endl;
+        exit(0);
+    }
+    vector<vector<double>>B;
+    if(r_step>0){
+        for (int i = r; i < r+r_step; ++i) {
+            B.push_back(getRow(A,i).at(0));
+        }
+    }
+    else{
+        for (int i = r+r_step+1; i <=r ; ++i) {
+            B.push_back(getRow(A,i).at(0));
+        }
+    }
+    return B;
+}
+
+//取列
+vector<vector<double>> CPPMAT::getColumn(const vector<vector<double>>&A, int num){
+    if(num>A.at(0).size()){
+        cout<<"取列向量操作超出矩阵最大列数！"<<endl;
+        exit(0);
+    }
+    else if (num<=0){
+        cout<<"取列向量操作参数应大于0！"<<endl;
+        exit(0);
+    }
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    vector<vector<double>> column;
+    for (int i = 0; i < A_h; ++i) {
+        column.push_back(vector<double>{A[i][num-1]});
+    }
+    return column;
+}
+
+//取多个列向量
+vector<vector<double>> CPPMAT::getColumns(const vector<vector<double>>&A, int c,int c_step){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(c>A_l||c+c_step-1>A_l){
+        cout<<"取列向量操作超出矩阵最大列数！"<<endl;
+        exit(0);
+    }
+    else if (c<=0||c+c_step+1<=0){
+        cout<<"取列向量操作参数应大于0！"<<endl;
+        exit(0);
+    }
+    else if(c_step==0){
+        cout<<"取列向量列跨度不可为0！"<<endl;
+        exit(0);
+    }
+    vector<vector<double>>B;
+    if(c_step>0){
+        for (int i = c; i < c+c_step; ++i) {
+            if(i==c){
+                B=getColumn(A,i);
+            }
+            else {
+                B=matrix_overlaying_beside(B,getColumn(A,i));
+            }
+        }
+    }
+    else if(c_step<0){
+        for (int i = c+c_step+1; i <= c; ++i) {
+            if(i==c+c_step+1){
+                B=getColumn(A,i);
+            }
+            else {
+                B=matrix_overlaying_beside(B,getColumn(A,i));
+            }
         }
     }
     return B;
