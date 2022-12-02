@@ -39,8 +39,8 @@ public:
         int bx_circle;
         double chanum;
         double volbase;
-        int a;
-        int r;
+        double a;
+        double r;
         double d2;
         int zxflag;
         int qjflag;

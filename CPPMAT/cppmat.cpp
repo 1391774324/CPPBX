@@ -17,6 +17,29 @@ vector<vector<double>> CPPMAT::creatmatrix(int h,int l)
     return v;
 }
 
+//创建 h行l列的矩阵，并将初始各值设定为1
+vector<vector<double>> CPPMAT::creatmatrix_ones(int h,int l){
+    vector<vector<double>> v;
+    for (int i = 0; i < h; i++)
+    {
+        vector<double>v1(l,1);
+        v.push_back(v1);
+    }
+    return v;
+}
+
+//创建 h行l列的矩阵，并将初始各值设定为num
+vector<vector<double>> CPPMAT::creatmatrix_Nums(int h,int l,double num){
+    vector<vector<double>> v;
+    for (int i = 0; i < h; i++)
+    {
+        vector<double>v1(l,num);
+        v.push_back(v1);
+    }
+    return v;
+}
+
+
 //创建h行l列赋值（默认0）矩阵；
 vector<vector<double>> CPPMAT::creatmatrix(int h,int l, vector<double> elements){
     vector<vector<double>> v;
@@ -149,6 +172,51 @@ vector<vector<double>> CPPMAT::multiply_num(const vector<vector<double>>&A,doubl
     return B;
 }
 
+//矩阵A./num=矩阵B，并返回
+vector<vector<double>> CPPMAT::divide_num(const vector<vector<double>>&A,double num){
+    int A_h=A.size();
+    int A_l=A[0].size();
+    vector<vector<double>> B=creatmatrix(A_h,A_l);
+    for (int i = 0; i < A_h; i++)
+    {
+        for (int j = 0; j < A_l; j++)
+        {
+            B[i][j]=A[i][j]/num;
+        }
+    }
+    return B;
+}
+
+// 矩阵sin
+vector<vector<double>> CPPMAT::sin_matrix(const vector<vector<double>>&A){
+    int A_h=A.size();
+    int A_l=A[0].size();
+    vector<vector<double>> B=creatmatrix(A_h,A_l);
+    for (int i = 0; i < A_h; i++)
+    {
+        for (int j = 0; j < A_l; j++)
+        {
+            B[i][j]=sin(A[i][j]);
+        }
+    }
+    return B;
+}
+
+// 矩阵cos
+vector<vector<double>> CPPMAT::cos_matrix(const vector<vector<double>>&A){
+    int A_h=A.size();
+    int A_l=A[0].size();
+    vector<vector<double>> B=creatmatrix(A_h,A_l);
+    for (int i = 0; i < A_h; i++)
+    {
+        for (int j = 0; j < A_l; j++)
+        {
+            B[i][j]=cos(A[i][j]);
+        }
+    }
+    return B;
+}
+
 //取子矩阵
 vector<vector<double>> CPPMAT::subMatrix(const vector<vector<double>> &A,int r, int r_step, int c, int c_step){
     int A_h=A.size();
@@ -214,6 +282,73 @@ vector<vector<double>> CPPMAT::subMatrix(const vector<vector<double>> &A,int r, 
     return B;
 }
 
+// 按步长取子矩阵
+vector<vector<double>> CPPMAT::subMatrix_step(const vector<vector<double>> &A,int r, int r_step, int r_end, int c,int c_step, int c_end){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(r>A_h||r_end>A_h){
+       cout<<"按步长取子矩阵行数大于原矩阵行数范围！"<<endl;
+       exit(0);
+    }
+    else if(c>A_l||c_end>A_l){
+       cout<<"按步长取子矩阵列数大于原矩阵列数范围！"<<endl;
+       exit(0);
+    }
+    else if(r<=0||c<=0||r_end<=0||c_end<=0){
+        cout<<"按步长取子矩阵行列参数应大于0！"<<endl;
+        exit(0);
+    }
+    else if(r_step<=0||c_step<=0){
+        cout<<"按步长取子矩阵行列跨度不可小于等于0！"<<endl;
+        exit(0);
+    }
+
+
+
+    vector<vector<double>> B;
+    if(r<r_end){
+        if(c<c_end){
+            for (int i = r; i <= r_end; i+=r_step) {
+                vector<double> v;
+                for (int j = c; j <= c_end; j+=c_step) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+        else if(c>c_end){
+            for (int i = r; i <= r_end; i+=r_step) {
+                vector<double> v;
+                for (int j = c; j >= c_end; j-=c_step) {
+                    v.insert(v.begin(),A[i-1][j-1]);
+                }
+                B.push_back(v);
+            }
+        }
+    }
+    else if(r>r_end){
+        if(c<c_end){
+            for (int i = r; i >= r_end; i-=r_step) {
+                vector<double> v;
+                for (int j = c; j <= c_end; j+=c_step) {
+                    v.push_back(A[i-1][j-1]);
+                }
+                B.insert(B.begin(),v);
+            }
+        }
+        else if(c>c_end){
+            for (int i = r; i >= r_end; i-=r_step) {
+                vector<double> v;
+                for (int j = c; j >= c_end; j-=c_step) {
+                    v.insert(v.begin(),A[i-1][j-1]);
+                }
+                B.insert(B.begin(),v);
+            }
+        }
+    }
+    return B;
+
+}
 
 //取行
 vector<vector<double>> CPPMAT::getRow(const vector<vector<double>>&A, int num){
@@ -560,6 +695,109 @@ vector<vector<double>> CPPMAT::changeColumn(const vector<vector<double>>&A,int c
     }
 
     return C;
+}
+
+
+// 求和
+double CPPMAT::matrix_sum (const vector<vector<double>> &A){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(A_h!=1&&A_l!=1){
+        cout<<"矩阵既不是行向量也不是列向量！"<<endl;
+        exit(0);
+    }
+    vector<double> v;
+    if (A_h==1){
+        v=A.at(0);
+    }
+    else if(A_l==1){
+        for (int i = 0; i < A_h; ++i) {
+            v.push_back(A.at(i).at(0));
+        }
+    }
+
+    double sum = accumulate(begin(v),end(v),0.0);
+    return sum;
+}
+
+// 均值
+double CPPMAT::matrix_mean (const vector<vector<double>> &A){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(A_h!=1&&A_l!=1){
+        cout<<"矩阵既不是行向量也不是列向量！"<<endl;
+        exit(0);
+    }
+    vector<double> v;
+    if (A_h==1){
+        v=A.at(0);
+    }
+    else if(A_l==1){
+        for (int i = 0; i < A_h; ++i) {
+            v.push_back(A.at(i).at(0));
+        }
+    }
+
+    double sum = accumulate(begin(v),end(v),0.0);
+    double mean = sum/v.size();
+    return mean;
+
+}
+
+
+//方差
+double matrix_variance (const vector<vector<double>> &A){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(A_h!=1&&A_l!=1){
+        cout<<"矩阵既不是行向量也不是列向量！"<<endl;
+        exit(0);
+    }
+    vector<double> v;
+    if (A_h==1){
+        v=A.at(0);
+    }
+    else if(A_l==1){
+        for (int i = 0; i < A_h; ++i) {
+            v.push_back(A.at(i).at(0));
+        }
+    }
+    double sum = accumulate(begin(v),end(v),0.0);
+    double mean = sum/v.size();
+    double variance  = 0.0;
+    for (uint16_t i = 0 ; i < v.size() ; i++){
+        variance = variance + pow(v[i]-mean,2);
+    }
+    variance = variance/v.size();
+    return variance;
+}
+
+//标准差
+double matrix_standard_deviation (const vector<vector<double>> &A){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(A_h!=1&&A_l!=1){
+        cout<<"矩阵既不是行向量也不是列向量！"<<endl;
+        exit(0);
+    }
+    vector<double> v;
+    if (A_h==1){
+        v=A.at(0);
+    }
+    else if(A_l==1){
+        for (int i = 0; i < A_h; ++i) {
+            v.push_back(A.at(i).at(0));
+        }
+    }
+    double sum = accumulate(begin(v),end(v),0.0);
+    double mean = sum/v.size();
+    double variance  = 0.0;
+    for (uint16_t i = 0 ; i < v.size() ; i++){
+        variance = variance + pow(v[i]-mean,2);
+    }
+    variance = variance/v.size();
+    double standard_deviation = sqrt(variance);
+    return standard_deviation;
 }
 
 void CPPMAT::show_matrix(const vector<vector<double>> &A)

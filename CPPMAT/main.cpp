@@ -10,10 +10,10 @@ int main()
     string pipesize = "10inch";
     string dataPath1 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat1IN.bin";
     string dataPath2 = "D:\\ZeYuWorkspace\\bxdata\\BX20221125-111613-1_000.dat2IN.bin";
-    string correctPath1 = "";
-    string correctPath2 = "";
-    string outPath1="";
-    string outPath2="";
+    string correctPath1 = "D:\\ZeYuWorkspace\\bxdata\\correct\\BX20221121-154134-1_000.dat1IN.bin";
+    string correctPath2 = "D:\\ZeYuWorkspace\\bxdata\\correct\\BX20221121-154134-1_000.dat1IN.bin";
+    string outPath1="D:\\ZeYuWorkspace\\bxoutput";
+    string outPath2="D:\\ZeYuWorkspace\\bxoutput";
 
     BXToolKit::align_extract(pipesize,dataPath1,dataPath2,correctPath1,correctPath2,outPath1,outPath2);
 
@@ -31,7 +31,7 @@ int main()
 //    vector<vector<double>> myMatrix;
 
 //    myMatrix=CPPMAT::creatmatrix(3,3,num);
-//    CPPMAT::show_matrix(CPPMAT::changeRow(myMatrix,1,CPPMAT::getRow(myMatrix,3)));
+//    CPPMAT::show_matrix(CPPMAT::subMatrix_step(myMatrix,1,1,3,3,1,1));
 
 
     return 0;
