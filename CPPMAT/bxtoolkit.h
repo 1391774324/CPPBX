@@ -26,6 +26,7 @@ public:
     static vector<vector<double>> combine_correct(string correctPath1,string correctPath2, ParaGet parameters);
     static vector<vector<double>> f_value(const vector<vector<double>>&bianxing_data_ori,const vector<vector<double>>&correct_data,ParaGet parameters);
     static vector<vector<double>> f_v2h(const vector<vector<double>>&bianxing_data_vol,ParaGet parameters);
+    static vector<vector<double>> f_baseValue(const vector<vector<double>>&data);
 
 };
 

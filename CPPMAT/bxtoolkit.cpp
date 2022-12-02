@@ -8,6 +8,9 @@ BXToolKit::BXToolKit()
 
 // 对齐抽数算法
 void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath2, string correctPath1, string correctPath2, string outPath1, string outPath2){
+
+    cout<<"对齐抽数算法运行开始，请稍后......"<<endl;
+
     ParaGet *parameters = new ParaGet(pipesize);
 
     // 提取数据
@@ -84,6 +87,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     double a = parameters->propara.a;
     double r = parameters->propara.r;
 
+    vector<vector<double>> data2hbase;
     if(!correctPath1.empty()){
         vector<vector<double>> correctData=combine_correct(correctPath1,correctPath2,*parameters);
 //        //检查 correctData
@@ -96,14 +100,77 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 
         // 高度转换
         vector<vector<double>> data2hNobase=f_v2h(bianxing_data_correct_vol,*parameters);
-        //检查 data2hNobase
-        CPPMAT::show_matrix(CPPMAT::getRow(data2hNobase,1));
-        cout<<data2hNobase.size()<<"---"<<data2hNobase.at(0).size()<<endl;
+//        //检查 data2hNobase
+//        CPPMAT::show_matrix(CPPMAT::getRow(data2hNobase,1));
+//        cout<<data2hNobase.size()<<"---"<<data2hNobase.at(0).size()<<endl;
 
+        data2hbase = f_baseValue(data2hNobase);
+//        //检查 data2hbase
+//        CPPMAT::show_matrix(CPPMAT::getRow(data2hbase,1));
+//        cout<<data2hbase.size()<<"---"<<data2hbase.at(0).size()<<endl;
+    }
+    else {
+        vector<vector<double>> bianxing_data_correct_vol = bianxing_data_ori;
+        vector<vector<double>> data2hNobase = f_v2h(bianxing_data_correct_vol,*parameters);
+        data2hbase=f_baseValue(data2hNobase);
     }
 
+    // 变形数据存储
+    string filename=outPath1+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of("."));
+    ofstream ofs(filename,ios::binary | ios::out);
+    int len=data2hbase.at(0).size()*data2hbase.size();
+    double* outputData=new double[len];
+    for (int i = 0; i < data2hbase.size(); ++i) {
+        for (int j = 0; j < data2hbase.at(0).size(); ++j) {
+            outputData[j+i*data2hbase.at(0).size()]=data2hbase[i][j];
+        }
+    }
+    ofs.write((const char*)outputData,sizeof(double)*len);
+    delete[](outputData);
+    ofs.close();
 
+    // 辅助信息提取+存储
+    double zx_chal = parameters->datpara.zxchal;
+    double qj_chal = parameters->datpara.qjchal;
+    double hx_chal = parameters->datpara.hxchal;
+    double mile1_cha = parameters->datpara.mile1_cha;
+    double mile2_cha = parameters->datpara.mile2_cha;
+    double mile3_cha = parameters->datpara.mile3_cha;
+    double time_chal = parameters->datpara.timechal;
+    double vol_chal = parameters->datpara.volchal;
+    double temp2_chal = parameters->datpara.temp2chal;
 
+    // 优选里程存储
+    vector<vector<double>> Assis;
+    Assis.push_back(CPPMAT::getRow(PreData1,1).at(0));
+    string filename2=outPath2+"\\mile.bin";
+    int file2_len = Assis.at(0).size();
+    double* outputData_file2=new double[file2_len];
+    for (int i = 0; i < file2_len; ++i) {
+        outputData_file2[i]=Assis.at(0).at(i);
+    }
+    ofstream ofs2(filename2,ios::binary | ios::out);
+    ofs2.write((const char*)outputData_file2,sizeof(double)*file2_len);
+    delete[](outputData_file2);
+    ofs2.close();
+
+    // 三路里程存储
+    Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,mile1_cha));
+    Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,mile2_cha));
+    Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,mile3_cha));
+    Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,zx_chal));
+    string filename3=outPath2+"\\zhou.bin";
+    int file3_len = Assis.at(0).size();
+    double* outputData_file3=new double[file3_len];
+    for (int i = 0; i < file3_len; ++i) {
+        outputData_file3[i]=Assis.at(4).at(i);      //Assis 第五行为周向角数据
+    }
+    ofstream ofs3(filename3,ios::binary | ios::out);
+    ofs3.write((const char*)outputData_file3,sizeof(double)*file3_len);
+    delete[](outputData_file3);
+    ofs3.close();
+
+    cout<<"对齐抽数算法运行完成！"<<endl;
 
 }
 
@@ -225,4 +292,25 @@ vector<vector<double>> BXToolKit::f_v2h(const vector<vector<double>>&bianxing_da
     bianxing_data_h=CPPMAT::multiply_num(CPPMAT::sin_matrix(alpha),a);
     bianxing_data_h=CPPMAT::plus(bianxing_data_h,CPPMAT::creatmatrix_Nums(bianxing_data_h.size(),bianxing_data_h.at(0).size(),r));
     return bianxing_data_h;
+}
+
+vector<vector<double>> BXToolKit::f_baseValue(const vector<vector<double>>&data){
+    vector<vector<double>> mid,bx_data_allbase;
+    vector<double> mid_list;
+    for (int i = 1; i <= data.at(0).size(); ++i) {
+        mid_list.push_back(CPPMAT::matrix_mid(CPPMAT::getColumn(data,i)));
+    }
+    mid.push_back(mid_list);
+    double aver = CPPMAT::matrix_mean(mid);
+    for (int i = 1; i <= mid_list.size(); ++i) {
+        double dis = mid_list.at(i-1)-aver;
+        if(i==1){
+            bx_data_allbase=CPPMAT::minus(CPPMAT::getColumn(data,i),CPPMAT::creatmatrix_Nums(data.size(),1,dis));
+        }
+        else {
+            bx_data_allbase=CPPMAT::matrix_overlaying_beside(bx_data_allbase,CPPMAT::minus(CPPMAT::getColumn(data,i),CPPMAT::creatmatrix_Nums(data.size(),1,dis)));
+        }
+
+    }
+    return bx_data_allbase;
 }

@@ -5,6 +5,7 @@
 #include <vector>
 #include <math.h>
 #include <numeric>
+#include <algorithm>
 
 #define M_epsilon 1e-12
 
@@ -45,6 +46,7 @@ public:
     static double matrix_mean (const vector<vector<double>> &A);                                                            //均值
     static double matrix_variance (const vector<vector<double>> &A);                                                        //方差
     static double matrix_standard_deviation (const vector<vector<double>> &A);                                              //标准差
+    static double matrix_mid (const vector<vector<double>> &A);                                                             //中位数
     static void show_matrix(const vector<vector<double>> &A);                                                               //打印矩阵
 
 };

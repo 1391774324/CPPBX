@@ -800,6 +800,27 @@ double matrix_standard_deviation (const vector<vector<double>> &A){
     return standard_deviation;
 }
 
+// 中位数
+double CPPMAT::matrix_mid (const vector<vector<double>> &A){
+    int A_h=A.size();
+    int A_l=A.at(0).size();
+    if(A_h!=1&&A_l!=1){
+        cout<<"矩阵既不是行向量也不是列向量！"<<endl;
+        exit(0);
+    }
+    vector<double> v;
+    if (A_h==1){
+        v=A.at(0);
+    }
+    else if(A_l==1){
+        for (int i = 0; i < A_h; ++i) {
+            v.push_back(A.at(i).at(0));
+        }
+    }
+    sort(v.begin(),v.end());
+    return v.at((v.size()/2)+(v.size()%2)-1);
+}
+
 void CPPMAT::show_matrix(const vector<vector<double>> &A)
 {
     int h=A.size();
