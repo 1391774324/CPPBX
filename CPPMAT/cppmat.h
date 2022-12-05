@@ -31,7 +31,7 @@ public:
     static vector<vector<double>> sin_matrix(const vector<vector<double>>&A);                                               //矩阵sin
     static vector<vector<double>> cos_matrix(const vector<vector<double>>&A);                                               //矩阵cos
     static vector<vector<double>> subMatrix(const vector<vector<double>> &A,int r, int r_step, int c,int c_step);           //取子矩阵（原矩阵，行，行跨度，列，列跨度）
-    static vector<vector<double>> subMatrix_step(const vector<vector<double>> &A,int r, int r_step, int r_end, int c,int c_step, int c_end);
+    static vector<vector<double>> subMatrix_step(const vector<vector<double>> &A,int r, int r_step, int r_end, int c,int c_step, int c_end);    //正序逆序取子矩阵
     static vector<vector<double>> getRow(const vector<vector<double>> &A, int num);                                         //取行向量
     static vector<vector<double>> getRows(const vector<vector<double>> &A, int r,int r_step);                               //取多个行向量
     static vector<vector<double>> getColumn(const vector<vector<double>> &A, int num);                                      //取列向量
@@ -42,7 +42,7 @@ public:
     static vector<vector<double>> inverse(const vector<vector<double>> &A);                                                 //矩阵求逆
     static vector<vector<double>> changeRow(const vector<vector<double>>&A,int row, const vector<vector<double>>&B);        //更改行向量
     static vector<vector<double>> changeColumn(const vector<vector<double>>&A,int column, const vector<vector<double>>&B);  //更改列向量
-    static double matrix_sum (const vector<vector<double>> &A);
+    static double matrix_sum (const vector<vector<double>> &A);                                                             //向量求和
     static double matrix_mean (const vector<vector<double>> &A);                                                            //均值
     static double matrix_variance (const vector<vector<double>> &A);                                                        //方差
     static double matrix_standard_deviation (const vector<vector<double>> &A);                                              //标准差

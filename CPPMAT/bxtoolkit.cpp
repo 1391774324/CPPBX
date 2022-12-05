@@ -14,6 +14,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ParaGet *parameters = new ParaGet(pipesize);
 
     // 提取数据
+    cout<<"正在提取数据..."<<endl;
     vector<vector<double>> PreData1;
     vector<vector<double>> PreData2;
     PreData1=OpenDataFile(dataPath1,parameters->datpara.line_num);
@@ -23,12 +24,15 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     else {
         PreData2=PreData1;
     }
+    cout<<"数据提取成功..."<<endl;
+
 
     double move_length=parameters->propara.move_length;     //传感器对齐
     // 基于帧记数处理数据 SW
+    cout<<"正在基于帧记数处理数据..."<<endl;
     PreData1=trip(CPPMAT::getRow(PreData1,1),PreData1,0);
     PreData2=trip(CPPMAT::subMatrix(PreData2,1,1,1,move_length+5),CPPMAT::getColumns(PreData2,1,move_length+5),0);
-
+    cout<<"基于帧记数处理数据完成..."<<endl;
 //    //检查trip返回的Predata1&2
 //    CPPMAT::show_matrix(CPPMAT::getColumn(PreData1,1));
 //    CPPMAT::show_matrix(CPPMAT::getColumn(PreData2,1));
@@ -36,6 +40,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 //    cout<<PreData2.size()<<"---"<<PreData2.at(0).size()<<endl;
 
     //变形数据对齐
+    cout<<"正在进行变形数据对齐..."<<endl;
     int bx_start = parameters->datpara.bx_start;
     int bx_end = parameters->datpara.bx_end;
     int bx_flag = parameters->propara.bx_flag;
@@ -75,13 +80,14 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     else {
         bianxing_data_ori=bianxing_data_ori1;
     }
-
+    cout<<"传感器对齐完成..."<<endl;
 //        //检查bianxing_data_ori
 //        CPPMAT::show_matrix(CPPMAT::getRow(bianxing_data_ori,1));
 //        cout<<bianxing_data_ori.size()<<"---"<<bianxing_data_ori.at(0).size()<<endl;
 //        cout<<bianxing_data_ori[49999][34]<<endl;
 
     // 数据校准
+    cout<<"正在进行数据校准..."<<endl;
     double volbase = parameters->propara.volbase;
     double bx_cha = parameters->propara.chanum;
     double a = parameters->propara.a;
@@ -114,8 +120,11 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
         vector<vector<double>> data2hNobase = f_v2h(bianxing_data_correct_vol,*parameters);
         data2hbase=f_baseValue(data2hNobase);
     }
+    cout<<"数据校准完成..."<<endl;
+
 
     // 变形数据存储
+    cout<<"数据存储中..."<<endl;
     string filename=outPath1+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of("."));
     ofstream ofs(filename,ios::binary | ios::out);
     int len=data2hbase.at(0).size()*data2hbase.size();
@@ -128,6 +137,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ofs.write((const char*)outputData,sizeof(double)*len);
     delete[](outputData);
     ofs.close();
+    cout<<"变形数据存储完成..."<<endl;
 
     // 辅助信息提取+存储
     double zx_chal = parameters->datpara.zxchal;
@@ -153,6 +163,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ofs2.write((const char*)outputData_file2,sizeof(double)*file2_len);
     delete[](outputData_file2);
     ofs2.close();
+    cout<<"优选里程数据存储完成..."<<endl;
 
     // 三路里程存储
     Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,mile1_cha));
@@ -169,6 +180,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ofs3.write((const char*)outputData_file3,sizeof(double)*file3_len);
     delete[](outputData_file3);
     ofs3.close();
+    cout<<"周向数据存储完成..."<<endl;
 
     cout<<"对齐抽数算法运行完成！"<<endl;
 
@@ -176,6 +188,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 
 
 vector<vector<double>> BXToolKit::OpenDataFile(string dataPath,int lineNum){
+
     ifstream file;
     file.open(dataPath, ios::binary|ios::in);
     if (file.is_open() == false) {	// 文件打开失败
@@ -212,6 +225,7 @@ vector<vector<double>> BXToolKit::OpenDataFile(string dataPath,int lineNum){
 
     file.close();
     A=CPPMAT::trans(A);
+
     return A;
 
 }

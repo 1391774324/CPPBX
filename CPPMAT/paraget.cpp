@@ -892,4 +892,5 @@ ParaGet::ParaGet(string pipesize)
     default:
         break;
     }
+    cout<<"变形系统参数初始化完成..."<<endl;
 }

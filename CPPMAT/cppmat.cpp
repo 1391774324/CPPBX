@@ -282,7 +282,7 @@ vector<vector<double>> CPPMAT::subMatrix(const vector<vector<double>> &A,int r, 
     return B;
 }
 
-// 按步长取子矩阵
+// 按步长正序逆序取子矩阵
 vector<vector<double>> CPPMAT::subMatrix_step(const vector<vector<double>> &A,int r, int r_step, int r_end, int c,int c_step, int c_end){
     int A_h=A.size();
     int A_l=A.at(0).size();
@@ -320,7 +320,7 @@ vector<vector<double>> CPPMAT::subMatrix_step(const vector<vector<double>> &A,in
             for (int i = r; i <= r_end; i+=r_step) {
                 vector<double> v;
                 for (int j = c; j >= c_end; j-=c_step) {
-                    v.insert(v.begin(),A[i-1][j-1]);
+                    v.push_back(A[i-1][j-1]);
                 }
                 B.push_back(v);
             }
@@ -333,16 +333,16 @@ vector<vector<double>> CPPMAT::subMatrix_step(const vector<vector<double>> &A,in
                 for (int j = c; j <= c_end; j+=c_step) {
                     v.push_back(A[i-1][j-1]);
                 }
-                B.insert(B.begin(),v);
+                B.push_back(v);
             }
         }
         else if(c>c_end){
             for (int i = r; i >= r_end; i-=r_step) {
                 vector<double> v;
                 for (int j = c; j >= c_end; j-=c_step) {
-                    v.insert(v.begin(),A[i-1][j-1]);
+                    v.push_back(A[i-1][j-1]);
                 }
-                B.insert(B.begin(),v);
+                B.push_back(v);
             }
         }
     }
