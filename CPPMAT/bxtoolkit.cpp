@@ -93,7 +93,12 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     double a = parameters->propara.a;
     double r = parameters->propara.r;
 
-    vector<vector<double>> data2hbase;
+    vector<vector<double>> data2hbase,data2hNobase,data4analysis;
+    data4analysis=bianxing_data_ori;
+//    //检查data4analysis
+//    CPPMAT::show_matrix(CPPMAT::getRow(data4analysis,1));
+//    cout<<data4analysis.size()<<"---"<<data4analysis.at(0).size()<<endl;
+//    cout<<data4analysis[49999][34]<<endl;
     if(!correctPath1.empty()){
         vector<vector<double>> correctData=combine_correct(correctPath1,correctPath2,*parameters);
 //        //检查 correctData
@@ -105,7 +110,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 //        cout<<bianxing_data_correct_vol.size()<<"---"<<bianxing_data_correct_vol.at(0).size()<<endl;
 
         // 高度转换
-        vector<vector<double>> data2hNobase=f_v2h(bianxing_data_correct_vol,*parameters);
+        data2hNobase=f_v2h(bianxing_data_correct_vol,*parameters);
 //        //检查 data2hNobase
 //        CPPMAT::show_matrix(CPPMAT::getRow(data2hNobase,1));
 //        cout<<data2hNobase.size()<<"---"<<data2hNobase.at(0).size()<<endl;
@@ -114,13 +119,18 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 //        //检查 data2hbase
 //        CPPMAT::show_matrix(CPPMAT::getRow(data2hbase,1));
 //        cout<<data2hbase.size()<<"---"<<data2hbase.at(0).size()<<endl;
+
+        cout<<"数据校准完成..."<<endl;
     }
     else {
         vector<vector<double>> bianxing_data_correct_vol = bianxing_data_ori;
-        vector<vector<double>> data2hNobase = f_v2h(bianxing_data_correct_vol,*parameters);
+        data2hNobase = f_v2h(bianxing_data_correct_vol,*parameters);
         data2hbase=f_baseValue(data2hNobase);
+
+        cout<<"无校准数据..."<<endl;
     }
-    cout<<"数据校准完成..."<<endl;
+
+
 
 
     // 变形数据存储
@@ -128,7 +138,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     string filename=outPath1+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of("."));
     ofstream ofs(filename,ios::binary | ios::out);
     int len=data2hbase.at(0).size()*data2hbase.size();
-    double* outputData=new double[len];
+    double* outputData = new double[len];
     for (int i = 0; i < data2hbase.size(); ++i) {
         for (int j = 0; j < data2hbase.at(0).size(); ++j) {
             outputData[j+i*data2hbase.at(0).size()]=data2hbase[i][j];
@@ -138,6 +148,35 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     delete[](outputData);
     ofs.close();
     cout<<"变形数据存储完成..."<<endl;
+
+    string filename_data2hNobase = outPath2+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of(".")-dataPath1.find_last_of("\\"))+("_data2hNobase.bin");
+    ofstream ofs_data2hNobase(filename_data2hNobase,ios::binary|ios::out);
+    int len_data2hNobase = data2hNobase.size()*data2hNobase.at(0).size();
+    double * outputData_data2hNobase = new double[len_data2hNobase];
+    for (int i = 0; i < data2hNobase.size(); ++i) {
+        for (int j = 0; j < data2hNobase.at(0).size(); ++j) {
+            outputData_data2hNobase[j+i*data2hbase.at(0).size()]=data2hNobase[i][j];
+        }
+    }
+    ofs_data2hNobase.write((const char*)outputData_data2hNobase,sizeof(double)*len_data2hNobase);
+    delete[](outputData_data2hNobase);
+    ofs_data2hNobase.close();
+    cout<<"变形数据data2hNobase存储完成..."<<endl;
+
+    string filename_data4analysis = outPath2+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of(".")-dataPath1.find_last_of("\\"))+("_data4analysis.bin");
+    ofstream ofs_data4analysis(filename_data4analysis,ios::binary|ios::out);
+    int len_data4analysis = data4analysis.size()*data4analysis.at(0).size();
+    double * outputData_data4analysis = new double[len_data4analysis];
+    for (int i = 0; i < data4analysis.size(); ++i) {
+        for (int j = 0; j < data4analysis.at(0).size(); ++j) {
+            outputData_data4analysis[j+i*data4analysis.at(0).size()]=data4analysis[i][j];
+        }
+    }
+    ofs_data4analysis.write((const char*)outputData_data4analysis,sizeof(double)*len_data4analysis);
+    delete[](outputData_data4analysis);
+    ofs_data4analysis.close();
+    cout<<"变形数据data4analysis存储完成..."<<endl;
+
 
     // 辅助信息提取+存储
     double zx_chal = parameters->datpara.zxchal;
@@ -155,7 +194,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     Assis.push_back(CPPMAT::getRow(PreData1,1).at(0));
     string filename2=outPath2+"\\mile.bin";
     int file2_len = Assis.at(0).size();
-    double* outputData_file2=new double[file2_len];
+    double* outputData_file2 = new double[file2_len];
     for (int i = 0; i < file2_len; ++i) {
         outputData_file2[i]=Assis.at(0).at(i);
     }
@@ -172,7 +211,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     Assis=CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,zx_chal));
     string filename3=outPath2+"\\zhou.bin";
     int file3_len = Assis.at(0).size();
-    double* outputData_file3=new double[file3_len];
+    double* outputData_file3 = new double[file3_len];
     for (int i = 0; i < file3_len; ++i) {
         outputData_file3[i]=Assis.at(4).at(i);      //Assis 第五行为周向角数据
     }
@@ -182,9 +221,43 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ofs3.close();
     cout<<"周向数据存储完成..."<<endl;
 
+    //倾角，航向角，时间，电压，接口板温度存储
+    Assis = CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,qj_chal));
+    Assis = CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,hx_chal));
+    Assis = CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,time_chal));
+    Assis = CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,vol_chal));
+    Assis = CPPMAT::matrix_overlaying_below(Assis,CPPMAT::getRow(PreData1,temp2_chal));
+    string filename_Assis = outPath2+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of(".")-dataPath1.find_last_of("\\"))+("_Assis.bin");
+    ofstream ofs_Assis(filename_Assis,ios::binary|ios::out);
+    int len_Assis = Assis.size()*Assis.at(0).size();
+    double * outputData_Assis = new double[len_Assis];
+    for (int i = 0; i < Assis.size(); ++i) {
+        for (int j = 0; j < Assis.at(0).size(); ++j) {
+            outputData_Assis[j+i*Assis.at(0).size()]=Assis[i][j];
+        }
+    }
+    ofs_Assis.write((const char*)outputData_Assis,sizeof(double)*len_Assis);
+    delete[](outputData_Assis);
+    ofs_Assis.close();
+    cout<<"变形数据Assis存储完成..."<<endl;
+
+
     cout<<"对齐抽数算法运行完成！"<<endl;
 
 }
+
+// 有效性算法
+void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, string data4analysis_Path, string Assis_Path, string outPath, double Window1, double Window2, double Pos_in, double Pos_out, int Flag_valid, int Flag_inout){
+    cout<<"有效性算法运行开始，请稍后......"<<endl;
+
+    ParaGet *parameters = new ParaGet(pipesize);
+
+    // 准备写日志文件
+    BXToolKit::writeLog(outPath,"开始进行有效性分析;");
+
+
+}
+
 
 
 vector<vector<double>> BXToolKit::OpenDataFile(string dataPath,int lineNum){
@@ -327,4 +400,13 @@ vector<vector<double>> BXToolKit::f_baseValue(const vector<vector<double>>&data)
 
     }
     return bx_data_allbase;
+}
+
+void BXToolKit::writeLog(string logPath, string logData){
+    string logFileName = logPath+("\\log.log");
+    ofstream ofs(logFileName,ios::app);
+    time_t sysTime = time(NULL);
+    tm* sysLocalTime = localtime(&sysTime);
+    ofs<<asctime(sysLocalTime)+logData<<endl;
+    ofs.close();
 }
