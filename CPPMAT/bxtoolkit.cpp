@@ -150,12 +150,13 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     cout<<"变形数据存储完成..."<<endl;
 
     string filename_data2hNobase = outPath2+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of(".")-dataPath1.find_last_of("\\"))+("_data2hNobase.bin");
+    data2hNobase=CPPMAT::trans(data2hNobase);
     ofstream ofs_data2hNobase(filename_data2hNobase,ios::binary|ios::out);
     int len_data2hNobase = data2hNobase.size()*data2hNobase.at(0).size();
     double * outputData_data2hNobase = new double[len_data2hNobase];
     for (int i = 0; i < data2hNobase.size(); ++i) {
         for (int j = 0; j < data2hNobase.at(0).size(); ++j) {
-            outputData_data2hNobase[j+i*data2hbase.at(0).size()]=data2hNobase[i][j];
+            outputData_data2hNobase[j+i*data2hNobase.at(0).size()]=data2hNobase[i][j];
         }
     }
     ofs_data2hNobase.write((const char*)outputData_data2hNobase,sizeof(double)*len_data2hNobase);
@@ -164,6 +165,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     cout<<"变形数据data2hNobase存储完成..."<<endl;
 
     string filename_data4analysis = outPath2+dataPath1.substr(dataPath1.find_last_of("\\"),dataPath1.find_last_of(".")-dataPath1.find_last_of("\\"))+("_data4analysis.bin");
+    data4analysis=CPPMAT::trans(data4analysis);
     ofstream ofs_data4analysis(filename_data4analysis,ios::binary|ios::out);
     int len_data4analysis = data4analysis.size()*data4analysis.at(0).size();
     double * outputData_data4analysis = new double[len_data4analysis];
@@ -241,6 +243,10 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
     ofs_Assis.close();
     cout<<"变形数据Assis存储完成..."<<endl;
 
+//    cout<<data2hNobase.size()<<"---"<<data2hNobase.at(0).size()<<endl;
+//    cout<<data4analysis.size()<<"---"<<data4analysis.at(0).size()<<endl;
+//    cout<<Assis.size()<<"---"<<Assis.at(0).size()<<endl;
+//    CPPMAT::show_matrix(CPPMAT::getColumn(data2hNobase,1));
 
     cout<<"对齐抽数算法运行完成！"<<endl;
 
@@ -255,10 +261,103 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     // 准备写日志文件
     BXToolKit::writeLog(outPath,"开始进行有效性分析;");
 
+    // 读文件
+    vector<vector<double>> data2hNobase,data4analysis,Assis;
+    data2hNobase=CPPMAT::trans(BXToolKit::readDataFileByRowNum(data2hNobase_Path,parameters->propara.chanum));
+    data4analysis = CPPMAT::trans(BXToolKit::readDataFileByRowNum(data4analysis_Path,parameters->propara.chanum));
+    Assis = CPPMAT::trans(BXToolKit::readDataFileByRowNum(Assis_Path,10));
+
+//    // 检查 data2hNobase,data4analysis,Assis
+//    cout<<data2hNobase.size()<<"---"<<data2hNobase.at(0).size()<<endl;
+//    cout<<data4analysis.size()<<"---"<<data4analysis.at(0).size()<<endl;
+//    cout<<Assis.size()<<"---"<<Assis.at(0).size()<<endl;
+//    CPPMAT::show_matrix(CPPMAT::getRow(data2hNobase,1));
+
+    BXToolKit::writeLog(outPath,"数据加载完毕;");
+    cout<<"数据加载完毕..."<<endl;
+
+    // 分解数据
+    vector<vector<double>> Mile,mile11,mile21,mile31,zx1,qj1,hx1,Time,vol1,temp2,licheng,mile1,mile2,mile3;
+    Mile=CPPMAT::getColumn(Assis,1);
+    mile11=CPPMAT::getColumn(Assis,2);
+    mile21=CPPMAT::getColumn(Assis,3);
+    mile31=CPPMAT::getColumn(Assis,4);
+    zx1=CPPMAT::getColumn(Assis,5);
+    qj1=CPPMAT::getColumn(Assis,6);
+    hx1=CPPMAT::getColumn(Assis,7);
+    Time=CPPMAT::getColumn(Assis,8);
+    vol1=CPPMAT::getColumn(Assis,9);
+    temp2=CPPMAT::getColumn(Assis,10);
+
+    // 里程二次处理+导出
+    licheng = CPPMAT::multiply_num(Mile,parameters->datpara.delt_mile);
+    string outputPath_licheng = outPath+"\\OptimizedMile.bin";
+    BXToolKit::writeDataFile(outputPath_licheng,licheng);
+
+    mile1=BXToolKit::trip_mor(mile11,0);
+    string outputPath_mile1 = outPath+"\\Mile1.bin";
+    BXToolKit::writeDataFile(outputPath_mile1,mile1);
+
+    mile2=BXToolKit::trip_mor(mile21,0);
+    string outputPath_mile2 = outPath+"\\Mile2.bin";
+    BXToolKit::writeDataFile(outputPath_mile2,mile2);
+
+    mile3=BXToolKit::trip_mor(mile31,0);
+    string outputPath_mile3 = outPath+"\\Mile3.bin";
+    BXToolKit::writeDataFile(outputPath_mile3,mile3);
+
+    BXToolKit::writeLog(outPath,"里程信息处理完毕;");
+    cout<<"里程信息处理完毕..."<<endl;
+
+    // 辅助信息二次处理
+
 
 }
 
+vector<vector<double>> BXToolKit::readDataFileByRowNum(string dataPath, int rowNum){
+    ifstream file;
+    file.open(dataPath, ios::binary|ios::in);
+    if (file.is_open() == false) {	// 文件打开失败
+        cout << "Open file  fail!" << endl;
+        exit(0);
+    }
+    file.seekg(0,ios_base::end);
+    streampos filesize=file.tellg();
+    int dataSize_double=filesize/8;
+    int row=rowNum;
+    int column = dataSize_double/rowNum;
+    file.seekg(0,ios_base::beg);
 
+    vector<vector<double>> A;
+    for (int i = 0; i < row; ++i) {
+        vector<double> v;
+        double * byteData = new double[column];
+        file.read((char*)byteData,sizeof(double)*column);
+        for (int j = 0; j < column; ++j) {
+            v.push_back(byteData[j]);
+        }
+        delete[](byteData);
+        A.push_back(v);
+    }
+    file.close();
+    return A;
+}
+
+void BXToolKit::writeDataFile(string outputPath, const vector<vector<double>>&Data){
+
+    ofstream ofs(outputPath,ios::binary|ios::out);
+    int len=Data.size()*Data.at(0).size();
+    double * outputData = new double[len];
+    for (int i = 0; i < Data.size(); ++i) {
+        for (int j = 0; j < Data.at(0).size(); ++j) {
+            outputData[j+i*Data.at(0).size()]=Data[i][j];
+        }
+    }
+    ofs.write((const char*)outputData,sizeof(double)*len);
+    delete[](outputData);
+    ofs.close();
+
+}
 
 vector<vector<double>> BXToolKit::OpenDataFile(string dataPath,int lineNum){
 
@@ -312,6 +411,16 @@ vector<vector<double>> BXToolKit::trip(const vector<vector<double>>&datain1,cons
             temp=CPPMAT::plus(CPPMAT::getColumn(dataout,i-1),CPPMAT::getColumn(dataout,i+1));
             temp=CPPMAT::multiply_num(temp,0.5);
             dataout=CPPMAT::changeColumn(dataout,i,temp);
+        }
+    }
+    return dataout;
+}
+
+vector<vector<double>> BXToolKit::trip_mor(const vector<vector<double>>&datain, int thre){
+    vector<vector<double>> dataout = datain;
+    for (int i = 2; i <= datain.size()-1; ++i) {
+        if((datain[i-1][0]-datain[i-2][0])<thre && (datain[i][0]-datain[i-2][0])>=0){
+            dataout[i-1][0]=(dataout[i-2][0]+dataout[i][0])/2;
         }
     }
     return dataout;

@@ -26,10 +26,13 @@ public:
     // 其他工具算法
     static vector<vector<double>> OpenDataFile(string dataPath,int lineNum);
     static vector<vector<double>> trip(const vector<vector<double>>&A,const vector<vector<double>>&B,int thre);
+    static vector<vector<double>> trip_mor(const vector<vector<double>>&datain, int thre);
     static vector<vector<double>> combine_correct(string correctPath1,string correctPath2, ParaGet parameters);
     static vector<vector<double>> f_value(const vector<vector<double>>&bianxing_data_ori,const vector<vector<double>>&correct_data,ParaGet parameters);
     static vector<vector<double>> f_v2h(const vector<vector<double>>&bianxing_data_vol,ParaGet parameters);
     static vector<vector<double>> f_baseValue(const vector<vector<double>>&data);
+    static vector<vector<double>> readDataFileByRowNum(string dataPath, int rowNum);
+    static void writeDataFile(string outputPath, const vector<vector<double>>&Data);
     static void writeLog (string logPath, string logData);
 
 };
