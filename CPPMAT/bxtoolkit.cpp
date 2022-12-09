@@ -277,7 +277,7 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     cout<<"数据加载完毕..."<<endl;
 
     // 分解数据
-    vector<vector<double>> Mile,mile11,mile21,mile31,zx1,qj1,hx1,Time,vol1,temp2,licheng,mile1,mile2,mile3;
+    vector<vector<double>> Mile,mile11,mile21,mile31,zx1,qj1,hx1,Time,vol1,temp2,licheng,mile1,mile2,mile3,zx,qj,hx,vol,temp;
     Mile=CPPMAT::getColumn(Assis,1);
     mile11=CPPMAT::getColumn(Assis,2);
     mile21=CPPMAT::getColumn(Assis,3);
@@ -310,6 +310,47 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     cout<<"里程信息处理完毕..."<<endl;
 
     // 辅助信息二次处理
+    Window2 =  Window2/0.002;       // 换算成里程点数
+
+    // 周向角处理
+    zx=BXToolKit::trip_ass(zx1,0);
+    if(parameters->propara.zxflag==2){
+        zx=CPPMAT::minus(CPPMAT::creatmatrix_Nums(zx.size(),zx.at(0).size(),360),zx);
+    }
+    string outputPath_zx = outPath+"\\ZhouXiangJiao.bin";
+    BXToolKit::writeDataFile(outputPath_zx,zx);
+
+    // 倾角处理
+    qj = BXToolKit::trip_ass(qj1,0);
+    if(parameters->propara.qjflag==2){
+        qj = CPPMAT::multiply_num(qj,-1);
+    }
+    string outputPath_qj = outPath+"\\QingJiao.bin";
+    BXToolKit::writeDataFile(outputPath_qj,qj);
+
+    // 航向角处理
+    hx = BXToolKit::trip_ass(hx1,0);
+    if(parameters->propara.hxflag==2){
+        hx = CPPMAT::multiply_num(hx,-1);
+    }
+    string outputPath_hx = outPath+"\\HangXiangJiao.bin";
+    BXToolKit::writeDataFile(outputPath_hx,hx);
+
+    // 电压处理
+    vol = BXToolKit::trip_ass(vol1,0);
+    string outputPath_vol = outPath+"\\DianYa.bin";
+    BXToolKit::writeDataFile(outputPath_vol,vol);
+
+    // 温度处理
+    temp = BXToolKit::trip_ass(temp2,0);
+    string outputPath_temp = outPath+"\\WenDu.bin";
+    BXToolKit::writeDataFile(outputPath_temp,temp);
+
+    BXToolKit::writeLog(outPath,"辅助信息处理完毕;");
+
+    // 内径计算 内径最小
+    double step = round(Window1/parameters->datpara.delt_mile);
+    BXToolKit::ployfitdia(data2hNobase,zx,*parameters,step);
 
 
 }
@@ -416,10 +457,29 @@ vector<vector<double>> BXToolKit::trip(const vector<vector<double>>&datain1,cons
     return dataout;
 }
 
-vector<vector<double>> BXToolKit::trip_mor(const vector<vector<double>>&datain, int thre){
+vector<vector<double>> BXToolKit::trip_mor(const vector<vector<double>>&datain, int thre){ // 列向量
+    if(datain.at(0).size()>1){
+        cout<<"trip_mor 函数输入参数不是列向量！";
+        exit(0);
+    }
     vector<vector<double>> dataout = datain;
+
     for (int i = 2; i <= datain.size()-1; ++i) {
         if((datain[i-1][0]-datain[i-2][0])<thre && (datain[i][0]-datain[i-2][0])>=0){
+            dataout[i-1][0]=(dataout[i-2][0]+dataout[i][0])/2;
+        }
+    }
+    return dataout;
+}
+
+vector<vector<double>> BXToolKit::trip_ass(const vector<vector<double>>&datain, int thre){ // 列向量
+    if(datain.at(0).size()>1){
+        cout<<"trip_mor 函数输入参数不是列向量！";
+        exit(0);
+    }
+    vector<vector<double>> dataout = datain;
+    for (int i = 2; i <= datain.size()-1; ++i) {
+        if((datain[i-1][0]-datain[i-2][0])<thre && (datain[i][0]-datain[i-1][0])>0){
             dataout[i-1][0]=(dataout[i-2][0]+dataout[i][0])/2;
         }
     }
@@ -509,6 +569,89 @@ vector<vector<double>> BXToolKit::f_baseValue(const vector<vector<double>>&data)
 
     }
     return bx_data_allbase;
+}
+
+vector<vector<double>> BXToolKit::ployfitdia(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters, int step){
+    vector<vector<double>> outputMatrix,data,datainfor;
+
+    // 拟合圆直径计算
+    data = data2hNobase;    //未经基值矫正的高度值
+
+    // 转换极坐标
+    datainfor = CirAngle;
+    vector<vector<vector<double>>> Dcell = BXToolKit::polarsystem(data,datainfor,parameters);
+    vector<vector<double>> x,y;
+    int k=1;
+    for (int i = 1; i <= Dcell.size(); i+=step) {
+        x=CPPMAT::trans(CPPMAT::getColumn(Dcell.at(i-1),2));// 每个小矩阵的第二列转换成行向量
+        y=CPPMAT::trans(CPPMAT::getColumn(Dcell.at(i-1),3));// 每个小矩阵的第三列转换成行向量
+        //TODO: [x1,y1,r1]=f_circle_r(x,y); circle_r函数的实现
+
+    }
+
+
+
+}
+
+double* circle_r(const vector<vector<double>>&x,const vector<vector<double>>&y){
+    double output[3];
+
+
+
+
+
+    return output;
+}
+
+vector<vector<vector<double>>> BXToolKit::polarsystem(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters){
+    vector<vector<vector<double>>> Dcell;
+    vector<vector<double>> Q,D,PointData;
+    double chanum = parameters.propara.chanum;
+    double center_0 = parameters.propara.center_0;
+    double one_angle = parameters.propara.one_angle;
+    for (int i = 1; i <= data2hNobase.size(); ++i) {
+        PointData = CPPMAT::getRow(data2hNobase,i);
+        Q=CPPMAT::creatmatrix(PointData.at(0).size(),1,PointData.at(0));    //将当前行pointdata存为Q的第一列
+        double PointCircumAngle = CirAngle[i-1][0];
+        vector<double> Q2,Q3;
+        for (int j = 1; j <= PointData.at(0).size(); ++j) {
+            Q2.push_back((BXToolKit::getangle(PointCircumAngle,j,center_0,one_angle,chanum)/180*M_PI));
+            Q3.push_back(PointCircumAngle+(i-center_0)*(one_angle));
+        }
+        Q=CPPMAT::matrix_overlaying_beside(Q,CPPMAT::creatmatrix(Q2.size(),1,Q2));
+        Q=CPPMAT::matrix_overlaying_beside(Q,CPPMAT::creatmatrix(Q3.size(),1,Q3));
+
+        D=CPPMAT::creatmatrix(PointData.at(0).size(),1,PointData.at(0));
+        D=CPPMAT::matrix_overlaying_beside(D,CPPMAT::multiply_dot(CPPMAT::getColumn(Q,1),CPPMAT::sin_matrix(CPPMAT::getColumn(Q,2))));
+        D=CPPMAT::matrix_overlaying_beside(D,CPPMAT::multiply_dot(CPPMAT::getColumn(Q,1),CPPMAT::cos_matrix(CPPMAT::getColumn(Q,2))));
+
+        Dcell.push_back(D);
+    }
+    return Dcell;
+}
+
+double BXToolKit::getangle(double zhouxiang,int channel,double center_0,double one_angle,double chanum){
+    double angle;
+    if (channel>center_0){
+        angle=zhouxiang+(channel-center_0)*one_angle;
+    }
+
+   else{
+        angle=zhouxiang+(channel+chanum-center_0)*one_angle;
+    }
+
+   if (angle>360){
+        angle=angle-360;
+   }
+   if (angle<0){
+       angle=angle+360;
+   }
+   stringstream ss;
+   ss.setf(ios::fixed);
+   ss.precision(1);
+   ss<<angle;
+   angle = atof(ss.str().c_str());
+   return angle;
 }
 
 void BXToolKit::writeLog(string logPath, string logData){

@@ -148,7 +148,7 @@ vector<vector<double>> CPPMAT::multiply_dot(const vector<vector<double>>&A,const
     }
     vector<vector<double>> C=creatmatrix(A_h,A_l);
     for (int i = 0; i < A_h; ++i) {
-        for (int j = 0; j < A_h; ++j) {
+        for (int j = 0; j < A_l; ++j) {
             C[i][j]=A[i][j]*B[i][j];
         }
     }
