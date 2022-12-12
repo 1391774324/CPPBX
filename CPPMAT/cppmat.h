@@ -45,8 +45,10 @@ public:
     static double matrix_sum (const vector<vector<double>> &A);                                                             //向量求和
     static double matrix_mean (const vector<vector<double>> &A);                                                            //均值
     static double matrix_variance (const vector<vector<double>> &A);                                                        //方差
-    static double matrix_standard_deviation (const vector<vector<double>> &A);                                              //标准差
+    static double matrix_standard_deviation (const vector<vector<double>> &A,double flag);                                  //标准差，公式中分母为n-flag
     static double matrix_mid (const vector<vector<double>> &A);                                                             //中位数
+    static bool ismember(const vector<vector<double>> &A, double num);                                                                  //判断是否为矩阵元素
+    static double getsize(const vector<vector<double>> &A);                                                                 //获取矩阵元素个数
     static void show_matrix(const vector<vector<double>> &A);                                                               //打印矩阵
 
 };

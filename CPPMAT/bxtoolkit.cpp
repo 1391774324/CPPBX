@@ -310,6 +310,7 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     cout<<"里程信息处理完毕..."<<endl;
 
     // 辅助信息二次处理
+    cout<<"二次处理辅助信息..."<<endl;
     Window2 =  Window2/0.002;       // 换算成里程点数
 
     // 周向角处理
@@ -347,10 +348,28 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     BXToolKit::writeDataFile(outputPath_temp,temp);
 
     BXToolKit::writeLog(outPath,"辅助信息处理完毕;");
+    cout<<"辅助信息二次处理完毕..."<<endl;
 
     // 内径计算 内径最小
+    cout<<"开始内径计算（计算时间较长，大约需要一分钟，请稍后）..."<<endl;
     double step = round(Window1/parameters->datpara.delt_mile);
-    BXToolKit::ployfitdia(data2hNobase,zx,*parameters,step);
+    tuple<vector<vector<vector<double>>>,vector<vector<double>>,vector<vector<double>>,double> ployfitdia_return = BXToolKit::ployfitdia(data2hNobase,zx,*parameters,step);
+    vector<vector<double>> D_fit,D_min;
+    D_fit = get<1>(ployfitdia_return);
+    D_min = get<2>(ployfitdia_return);
+
+    string outputPath_D_fit = outPath+"\\FittingInnerDiameter.bin";
+    BXToolKit::writeDataFile(outputPath_D_fit,D_fit);
+
+    string outputPath_D_min = outPath+"\\MinimumInnerDiameter.bin";
+    BXToolKit::writeDataFile(outputPath_D_min,D_min);
+
+    BXToolKit::writeLog(outPath,"内径计算完毕;");
+    cout<<"内径计算完毕..."<<endl;
+
+    //TODO: 有效性分析
+
+
 
 
 }
@@ -571,8 +590,10 @@ vector<vector<double>> BXToolKit::f_baseValue(const vector<vector<double>>&data)
     return bx_data_allbase;
 }
 
-vector<vector<double>> BXToolKit::ployfitdia(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters, int step){
-    vector<vector<double>> outputMatrix,data,datainfor;
+tuple<vector<vector<vector<double>>>,vector<vector<double>>,vector<vector<double>>,double> BXToolKit::ployfitdia(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters, int step){
+    vector<vector<double>> outputMatrix,data,datainfor,d_fit,d_fit_min;
+    vector<double> d_fit_data,d_fit_min_data;
+    double x1,y1,r1;
 
     // 拟合圆直径计算
     data = data2hNobase;    //未经基值矫正的高度值
@@ -585,21 +606,147 @@ vector<vector<double>> BXToolKit::ployfitdia(const vector<vector<double>>&data2h
     for (int i = 1; i <= Dcell.size(); i+=step) {
         x=CPPMAT::trans(CPPMAT::getColumn(Dcell.at(i-1),2));// 每个小矩阵的第二列转换成行向量
         y=CPPMAT::trans(CPPMAT::getColumn(Dcell.at(i-1),3));// 每个小矩阵的第三列转换成行向量
-        //TODO: [x1,y1,r1]=f_circle_r(x,y); circle_r函数的实现
+        double * circle_r_return = BXToolKit::circle_r(x,y);
+        x1=circle_r_return[0];
+        y1=circle_r_return[1];
+        r1=circle_r_return[2];
+        delete[](circle_r_return);
 
+        d_fit_data.push_back(r1*2);
+        d_fit_min_data.push_back(BXToolKit::min_fit(x,y,x1,y1));
     }
+    d_fit = CPPMAT::creatmatrix(1,d_fit_data.size(),d_fit_data);
+    d_fit_min = CPPMAT::creatmatrix(1,d_fit_min_data.size(),d_fit_min_data);
 
-
+    tuple<vector<vector<vector<double>>>,vector<vector<double>>,vector<vector<double>>,double> result = make_tuple(Dcell,d_fit,d_fit_min,0);
+    return result;
 
 }
 
-double* circle_r(const vector<vector<double>>&x,const vector<vector<double>>&y){
-    double output[3];
+double BXToolKit::min_fit(const vector<vector<double>>&x,const vector<vector<double>>&y,double x1, double y1){
+    vector<double> D;
+    double td_num = x.at(0).size();
+    for (int i = 1; i <= td_num/2; ++i) {
+        D.push_back((sqrt(pow((x.at(0).at(i-1)-x1),2)+pow((y.at(0).at(i-1)-y1),2))+sqrt(pow((x.at(0).at((i+td_num/2)-1)-x1),2)+pow((y.at(0).at((i+td_num/2)-1)-y1),2))));
+    }
+    double d_min = *min_element(D.begin(),D.end());
+    return d_min;
+}
+
+double* BXToolKit::circle_r(const vector<vector<double>>&x,const vector<vector<double>>&y){
+    vector<vector<vector<double>>> circlesystem_return;
+    vector<vector<double>> x_cell,y_cell,outlier,out_td,x_delete,y_delete;
+    vector<double> x_delete_data,y_delete_data;
+    double x1,y1,r1;
+    x_delete = x;
+    y_delete = y;
+
+    while (true) {
+        double* circlefit_return = circlefit(x_delete,y_delete);
+
+        x1 = circlefit_return[0];
+        y1 = circlefit_return[1];
+        r1 = circlefit_return[2];
+        delete[](circlefit_return);
+        //检查circlefit_return
+        //cout<<x1<<"---"<<y1<<"---"<<r1<<endl;
+
+        circlesystem_return = BXToolKit::circlesystem(x_delete,y_delete,x1,y1);
+        x_cell = circlesystem_return.at(0);
+        y_cell = circlesystem_return.at(1);
+        //检查circlesustem_return
+//      CPPMAT::show_matrix(x_cell);
+//      CPPMAT::show_matrix(y_cell);
+
+        outlier = BXToolKit::outlier_circle(r1,x_cell,y_cell);
+        if(!outlier.empty()){
+           x_delete_data.clear();
+           y_delete_data.clear();
+           out_td = CPPMAT::getColumn(outlier,1);
+           for (int i = 1; i <= x_delete.at(0).size(); ++i) {
+               if(CPPMAT::ismember(out_td,i)){
+                   continue;
+               }
+               else {
+                   x_delete_data.push_back(x_delete.at(0).at(i-1));
+                   y_delete_data.push_back(y_delete.at(0).at(i-1));
+               }
+           }
+           x_delete = CPPMAT::creatmatrix(1,x_delete_data.size(),x_delete_data);
+           y_delete = CPPMAT::creatmatrix(1,y_delete_data.size(),y_delete_data);
+
+        }
+        else {
+            break;
+        }
+
+    }
+    double * output = new double[3]{x1,y1,r1};
+    //cout<<output[0]<<"---"<<output[1]<<"---"<<output[2]<<endl;
+    return output;
+}
+
+vector<vector<double>> BXToolKit::outlier_circle(double R,const vector<vector<double>>&x_cell,const vector<vector<double>>&y_cell){
+    vector<vector<double>> distance,lb,outlier1;
+    vector<double> distance_data,outlier1_data;
+    for (int i = 1; i <= x_cell.at(0).size(); ++i) {
+        double x1 = x_cell.at(0).at(i-1);
+        double y1 = y_cell.at(0).at(i-1);
+        double l =sqrt((pow(x1,2)+pow(y1,2))-R);
+        distance_data.push_back(l);
+    }
+    distance = CPPMAT::creatmatrix(distance_data.size(),1,distance_data);
+    double sigma = CPPMAT::matrix_standard_deviation(distance,1);
+    lb = CPPMAT::minus(distance,CPPMAT::creatmatrix_Nums(distance.size(),distance.at(0).size(),CPPMAT::matrix_mean(distance)));
+    for (int i = 1; i <= lb.size(); ++i) {
+        if((lb[i-1][0]<=-3*sigma)||(lb[i-1][0]>=3*sigma)){
+            outlier1_data.push_back(i);
+            outlier1_data.push_back(lb[i-1][0]);
+        }
+    }
+    outlier1 = CPPMAT::creatmatrix(outlier1_data.size()/2,2,outlier1_data);
+
+    return outlier1;
+
+}
+
+vector<vector<vector<double>>> BXToolKit::circlesystem(const vector<vector<double>>&x,const vector<vector<double>>&y,double circle_a, double circle_b){
+    vector<vector<vector<double>>> output;
+    vector<vector<double>> x_cell,y_cell;
+
+    for (int i = 1; i <= x.at(0).size(); ++i) {
+        x_cell = CPPMAT::minus(x,CPPMAT::creatmatrix_Nums(1,x.at(0).size(),circle_a));
+        y_cell = CPPMAT::minus(y,CPPMAT::creatmatrix_Nums(1,y.at(0).size(),circle_b));
+    }
+    output.push_back(x_cell);
+    output.push_back(y_cell);
+    return output;
+}
+
+double* BXToolKit::circlefit(const vector<vector<double>>&x,const vector<vector<double>>&y){
 
 
 
+    double n = x.at(0).size();
+    vector<vector<double>> xx,yy,xy,A,B,a;
+    xx=CPPMAT::multiply_dot(x,x);
+    yy=CPPMAT::multiply_dot(y,y);
+    xy=CPPMAT::multiply_dot(x,y);
+
+    vector<double> A_data{CPPMAT::matrix_sum(x),CPPMAT::matrix_sum(y),n,CPPMAT::matrix_sum(xy),CPPMAT::matrix_sum(yy),CPPMAT::matrix_sum(y),CPPMAT::matrix_sum(xx),CPPMAT::matrix_sum(xy),CPPMAT::matrix_sum(x)};
+    vector<double> B_data{-(CPPMAT::matrix_sum(CPPMAT::plus(xx,yy))),-(CPPMAT::matrix_sum(CPPMAT::plus(CPPMAT::multiply_dot(xx,y),CPPMAT::multiply_dot(yy,y)))),-(CPPMAT::matrix_sum(CPPMAT::plus(CPPMAT::multiply_dot(xx,x),CPPMAT::multiply_dot(xy,y))))};
+    A = CPPMAT::creatmatrix(3,3,A_data);
+    B = CPPMAT::creatmatrix(3,1,B_data);
+    a = CPPMAT::multiply(CPPMAT::inverse(A),B);
+
+    double xc,yc,R;
+    xc=-0.5*a[0][0];
+    yc=-0.5*a[1][0];
+    R=sqrt(-(a[2][0]-pow(xc,2)-pow(yc,2)));
 
 
+
+    double *output = new double[3]{xc,yc,R};
     return output;
 }
 

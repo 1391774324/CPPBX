@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <ctime>
 #include <iomanip>
+#include <tuple>
 
 
 using namespace std;
@@ -34,10 +35,14 @@ public:
     static vector<vector<double>> f_v2h(const vector<vector<double>>&bianxing_data_vol,ParaGet parameters);
     static vector<vector<double>> f_baseValue(const vector<vector<double>>&data);
     static vector<vector<double>> readDataFileByRowNum(string dataPath, int rowNum);
-    static vector<vector<double>> ployfitdia(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters, int step);
+    static tuple<vector<vector<vector<double>>>,vector<vector<double>>,vector<vector<double>>,double> ployfitdia(const vector<vector<double>>&data2hNobase,const vector<vector<double>>&CirAngle,ParaGet parameters, int step);
     static vector<vector<vector<double>>> polarsystem(const vector<vector<double>>&data,const vector<vector<double>>&datainfor,ParaGet parameters);
+    static vector<vector<vector<double>>> circlesystem(const vector<vector<double>>&x,const vector<vector<double>>&y,double circle_a, double circle_b);
+    static vector<vector<double>> outlier_circle(double r1,const vector<vector<double>>&x,const vector<vector<double>>&y);
     static double* circle_r(const vector<vector<double>>&A,const vector<vector<double>>&B);
+    static double* circlefit(const vector<vector<double>>&A,const vector<vector<double>>&B);
     static double getangle(double PointCircumAngle,int j,double center_0,double one_angle,double chanum);
+    static double min_fit(const vector<vector<double>>&x,const vector<vector<double>>&y,double x1, double y1);
     static void writeDataFile(string outputPath, const vector<vector<double>>&Data);
     static void writeLog (string logPath, string logData);
 

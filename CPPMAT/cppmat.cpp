@@ -746,7 +746,7 @@ double CPPMAT::matrix_mean (const vector<vector<double>> &A){
 
 
 //方差
-double matrix_variance (const vector<vector<double>> &A){
+double CPPMAT::matrix_variance (const vector<vector<double>> &A){
     int A_h=A.size();
     int A_l=A.at(0).size();
     if(A_h!=1&&A_l!=1){
@@ -773,7 +773,7 @@ double matrix_variance (const vector<vector<double>> &A){
 }
 
 //标准差
-double matrix_standard_deviation (const vector<vector<double>> &A){
+double CPPMAT::matrix_standard_deviation (const vector<vector<double>> &A,double flag){
     int A_h=A.size();
     int A_l=A.at(0).size();
     if(A_h!=1&&A_l!=1){
@@ -795,7 +795,7 @@ double matrix_standard_deviation (const vector<vector<double>> &A){
     for (uint16_t i = 0 ; i < v.size() ; i++){
         variance = variance + pow(v[i]-mean,2);
     }
-    variance = variance/v.size();
+    variance = variance/(v.size()-flag);
     double standard_deviation = sqrt(variance);
     return standard_deviation;
 }
@@ -819,6 +819,30 @@ double CPPMAT::matrix_mid (const vector<vector<double>> &A){
     }
     sort(v.begin(),v.end());
     return v.at((v.size()/2)+(v.size()%2)-1);
+}
+
+
+bool CPPMAT::ismember(const vector<vector<double>> &A, double num){
+    int row = A.size();
+    int column = A.at(0).size();
+    bool flag = false;
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]==num){
+                flag = true;
+                return flag;
+            }
+        }
+    }
+    return flag;
+}
+
+
+double CPPMAT::getsize(const vector<vector<double>> &A){
+    int row = A.size();
+    int column = A.at(0).size();
+    double size = row * column;
+    return size;
 }
 
 void CPPMAT::show_matrix(const vector<vector<double>> &A)
