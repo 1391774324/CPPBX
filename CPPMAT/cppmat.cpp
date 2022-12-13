@@ -155,6 +155,26 @@ vector<vector<double>> CPPMAT::multiply_dot(const vector<vector<double>>&A,const
     return C;
 }
 
+bool CPPMAT::matrix_equal(const vector<vector<double>>&A,const vector<vector<double>>&B){
+    int A_h=A.size();
+    int A_l=A[0].size();
+    int B_h=B.size();
+    int B_l=B[0].size();
+
+    if((A_l !=B_l)||(A_h!=B_h))
+    {
+        return false;
+    }
+    for (int i = 0; i < A_h; ++i) {
+        for (int j = 0; j < A_l; ++j) {
+            if(A[i][j]!=B[i][j]){
+                return false;
+            }
+        }
+    }
+    return true;
+
+}
 
 //矩阵A*num=矩阵B，并返回
 vector<vector<double>> CPPMAT::multiply_num(const vector<vector<double>>&A,double num)
@@ -837,6 +857,89 @@ bool CPPMAT::ismember(const vector<vector<double>> &A, double num){
     return flag;
 }
 
+double CPPMAT::numOfMember(const vector<vector<double>> &A, double num){
+    int row = A.size();
+    int column = A.at(0).size();
+    double count=0;
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]==num){
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+double CPPMAT::numOfMember_lower(const vector<vector<double>> &A, double num){
+    int row = A.size();
+    int column = A.at(0).size();
+    double count=0;
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]<num){
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+double CPPMAT::numOfMember_larger(const vector<vector<double>> &A, double num){
+    int row = A.size();
+    int column = A.at(0).size();
+    double count=0;
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]>num){
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+double CPPMAT::numOfMinusMember(const vector<vector<double>> &A){
+    int row = A.size();
+    int column = A.at(0).size();
+    double count=0;
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]<0){
+                count++;
+            }
+        }
+    }
+    return count;
+}
+
+double CPPMAT::getMin(const vector<vector<double>> &A){
+    int row = A.size();
+    int column = A.at(0).size();
+    double min=A.at(0).at(0);
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]<min){
+                min=A[i][j];
+            }
+        }
+    }
+    return min;
+}
+
+double CPPMAT::getMax(const vector<vector<double>> &A){
+    int row = A.size();
+    int column = A.at(0).size();
+    double max=A.at(0).at(0);
+    for (int i = 0; i < row; ++i) {
+        for (int j = 0; j < column; ++j) {
+            if(A[i][j]>max){
+                max=A[i][j];
+            }
+        }
+    }
+    return max;
+}
 
 double CPPMAT::getsize(const vector<vector<double>> &A){
     int row = A.size();
@@ -858,3 +961,59 @@ void CPPMAT::show_matrix(const vector<vector<double>> &A)
         cout<<endl;
     }
 }
+
+vector<double> CPPMAT::smooth(vector<double> input_list,int width){
+    int k=width;
+    int nn = input_list.size();
+    vector<double> D = input_list;
+    int b=(k-1)/2;
+                vector<double> Z(nn);
+                if(nn>k)
+                {
+                    for(int i=0;i<nn;i++)
+                    {
+
+                        if(i<b)
+                        {
+                            Z[i]=0;
+                            for(int j=-i;j<i+1;j++)
+                            {
+                                Z[i]+=D[i+j];
+                            }
+                            Z[i]=Z[i]/(2*i+1);
+                        }
+
+                      else  if(((i>b)||(i=b))&((nn-i)>b))
+                        {
+                            Z[i]=0;
+                            for( int j=-b;j<b+1;j++)
+                            {
+                                Z[i]+=D[i+j];
+                            }
+                            Z[i]=Z[i]/k;
+                        }
+                        else
+                        {
+                            Z[i]=0;
+                            int i1=(nn-1)-i;
+                            for( int j=-i1;j<i1+1;j++)
+                            {
+                                Z[i]+=D[i+j];
+                            }
+                            Z[i]=Z[i]/(2*i1+1);
+                        }
+                    }
+                }
+
+                return Z;
+}
+
+vector<double> CPPMAT::diff(vector<double> v){
+    vector<double> output;
+    for (int i = 0; i < v.size()-1; ++i) {
+        output.push_back(v.at(i+1)=v.at(i));
+    }
+    return v;
+}
+
+

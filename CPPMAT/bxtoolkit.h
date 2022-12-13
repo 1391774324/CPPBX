@@ -23,7 +23,7 @@ public:
     // 对齐抽数算法
     static void align_extract(string pipesize, string dataPath1, string dataPath2, string correctPath1, string correctPath2, string outPath1, string outPath2);
     // 有效性算法
-    static void DataValidAnalyse(string pipesize,string data2hNobase_Path, string data4analysis_Path, string Assis_Path, string outPath, double Window1, double Window2, double Pos_in, double Pos_out, int Flag_valid, int Flag_inout);
+    static vector<double> DataValidAnalyse(string pipesize,string data2hNobase_Path, string data4analysis_Path, string Assis_Path, string outPath, double Window1, double Window2, double Pos_in, double Pos_out, int Flag_valid, int Flag_inout);
 
     // 其他工具算法
     static vector<vector<double>> OpenDataFile(string dataPath,int lineNum);        //变形抽数入读文件函数（原始数据为行列转置数据。）
@@ -39,6 +39,9 @@ public:
     static vector<vector<vector<double>>> polarsystem(const vector<vector<double>>&data,const vector<vector<double>>&datainfor,ParaGet parameters);
     static vector<vector<vector<double>>> circlesystem(const vector<vector<double>>&x,const vector<vector<double>>&y,double circle_a, double circle_b);
     static vector<vector<double>> outlier_circle(double r1,const vector<vector<double>>&x,const vector<vector<double>>&y);
+    static vector<double> validana_BX(const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,const vector<vector<double>>,double,double,ParaGet);
+    static vector<vector<double>> vel(const vector<vector<double>>&A,const vector<vector<double>>&B,double window2);
+    static tuple<double,double> mulcha_invalid(const vector<vector<double>>,double,double,double,double,double);
     static double* circle_r(const vector<vector<double>>&A,const vector<vector<double>>&B);
     static double* circlefit(const vector<vector<double>>&A,const vector<vector<double>>&B);
     static double getangle(double PointCircumAngle,int j,double center_0,double one_angle,double chanum);

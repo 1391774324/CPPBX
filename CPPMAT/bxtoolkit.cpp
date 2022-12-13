@@ -253,7 +253,7 @@ void BXToolKit::align_extract(string pipesize, string dataPath1, string dataPath
 }
 
 // 有效性算法
-void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, string data4analysis_Path, string Assis_Path, string outPath, double Window1, double Window2, double Pos_in, double Pos_out, int Flag_valid, int Flag_inout){
+vector<double> BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, string data4analysis_Path, string Assis_Path, string outPath, double Window1, double Window2, double Pos_in, double Pos_out, int Flag_valid, int Flag_inout){
     cout<<"有效性算法运行开始，请稍后......"<<endl;
 
     ParaGet *parameters = new ParaGet(pipesize);
@@ -277,7 +277,7 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     cout<<"数据加载完毕..."<<endl;
 
     // 分解数据
-    vector<vector<double>> Mile,mile11,mile21,mile31,zx1,qj1,hx1,Time,vol1,temp2,licheng,mile1,mile2,mile3,zx,qj,hx,vol,temp;
+    vector<vector<double>> Mile,mile11,mile21,mile31,zx1,qj1,hx1,Time,vol1,temp2,licheng,mile1,mile2,mile3,zx,qj,hx,vol,temp,speed;
     Mile=CPPMAT::getColumn(Assis,1);
     mile11=CPPMAT::getColumn(Assis,2);
     mile21=CPPMAT::getColumn(Assis,3);
@@ -347,8 +347,21 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     string outputPath_temp = outPath+"\\WenDu.bin";
     BXToolKit::writeDataFile(outputPath_temp,temp);
 
+    //速度处理
+    if(Time.back().at(0)<Time.at(Time.size()-2).at(0)){
+        Time[Time.size()-1][0]=Time.at(Time.size()-2).at(0)+1;
+    }
+    speed=BXToolKit::vel(Mile,Time,Window2);
+    speed=CPPMAT::multiply_num(speed,parameters->datpara.vtime);
+
+    string outputPath_speed=outPath+"\\speed.bin";
+    BXToolKit::writeDataFile(outputPath_speed,speed);
+
+
     BXToolKit::writeLog(outPath,"辅助信息处理完毕;");
     cout<<"辅助信息二次处理完毕..."<<endl;
+
+
 
     // 内径计算 内径最小
     cout<<"开始内径计算（计算时间较长，大约需要一分钟，请稍后）..."<<endl;
@@ -368,9 +381,239 @@ void BXToolKit::DataValidAnalyse(string pipesize,string data2hNobase_Path, strin
     cout<<"内径计算完毕..."<<endl;
 
     //TODO: 有效性分析
+    cout<<"开始有效性分析..."<<endl;
+    vector<double> result_validana_bx;
+    double licheng_in,licheng_out,licheng1;
 
+    if(Flag_valid==1){
+        if(Flag_inout==1){//进管文件
+            if(Pos_in!=0){
+                licheng_in=ceil(Pos_in/parameters->datpara.delt_mile-Mile.at(0).at(0))+1;
+                if((licheng_in<1)||(licheng_in>Mile.size())){
+                    licheng_in=1;
+                }
+            }
+            else{
+                licheng_in=1;
+            }
+            licheng_out=Mile.size();
+        }
+        else if(Flag_inout==2){//出管文件
+            if(Pos_out!=0){
+                licheng_out-ceil(Pos_out/parameters->datpara.delt_mile-Mile.at(0).at(0))+1;
+                if((licheng_out<1)||(licheng_out>Mile.size())){
+                    licheng_out=Mile.size();
+                }
+            }
+            else {
+                licheng_out = Mile.size();
+            }
+            licheng_in=1;
+        }
+        else if (Flag_inout==3){//一个文件
+            if(Pos_in!=0){
+                licheng_in=ceil(Pos_in/parameters->datpara.delt_mile-Mile.at(0).at(0))+1;
+                if((licheng_in<1)||(licheng_in>Mile.size())){
+                    licheng_in=1;
+                }
+            }
+            else {
+                licheng_in=1;
+            }
+            if(Pos_out!=0){
+                licheng_out=ceil(Pos_out/parameters->datpara.delt_mile-Mile.at(0).at(0))+1;
+                if((licheng_out<1)||(licheng_out>Mile.size())){
+                    licheng_out=Mile.size();
+                }
+            }
+            else {
+                licheng_out=Mile.size();
+            }
+        }
+        else {//中间文件
+            licheng_in=1;
+            licheng_out=Mile.size();
+        }
 
+        licheng1=Mile.back().at(0)*parameters->datpara.delt_mile;
 
+        result_validana_bx = BXToolKit::validana_BX(data4analysis,Mile,zx1,qj1,hx1,vol1,temp2,speed,licheng_in,licheng_out,*parameters);
+
+        BXToolKit::writeLog(outPath,"有效性计算完毕;");
+        cout<<"有效性计算完毕..."<<endl;
+
+    }
+    else{
+        licheng1=0;
+        result_validana_bx=vector<double>(18,0);
+
+        BXToolKit::writeLog(outPath,"不计算有效性,完毕;");
+        cout<<"不计算有效性..."<<endl;
+    }
+    result_validana_bx.insert(result_validana_bx.begin(),licheng1);
+
+    cout<<"有效性算法运行完成......"<<endl;
+    return result_validana_bx;
+
+}
+
+tuple<double,double> BXToolKit::mulcha_invalid(const vector<vector<double>> data1,double lobo_mfl_1,double upbo_mfl_1,double loss_sensor,double window1,double thresh1){
+    double dat1_num=data1.at(0).size();
+    double row=data1.size();
+
+    //连续数据缺失
+    vector<vector<double>> invalidFlag1,invalidFlag2,invalidChanel,piece_together;
+    vector<double> tempVector;
+    invalidFlag1=CPPMAT::creatmatrix(row,1);
+    invalidFlag2=CPPMAT::creatmatrix(row,1);
+    //超限缺失
+    for (int i = 1; i <=row ; ++i) {
+        invalidChanel=CPPMAT::creatmatrix(dat1_num,1);
+        tempVector=CPPMAT::getRow(data1,i).at(0);
+        for (int ii = 0; ii < tempVector.size(); ++ii) {
+            if((tempVector.at(ii)<lobo_mfl_1)||(tempVector.at(ii)>upbo_mfl_1)){
+                invalidChanel[ii][0]=1;
+            }
+        }
+        for (int j = 1; j <= dat1_num-(loss_sensor-1); ++j) {
+            if(CPPMAT::matrix_equal(CPPMAT::getRows(invalidChanel,j,loss_sensor),CPPMAT::creatmatrix_ones(loss_sensor,1))){
+                invalidFlag1[i-1][0]=1;
+                break;
+            }
+        }
+
+        for (int j = 1; j <= loss_sensor-1; ++j) {
+            piece_together=CPPMAT::matrix_overlaying_below(CPPMAT::getRows(invalidChanel,invalidChanel.size()-(loss_sensor-1)+j,(loss_sensor-1)-j+1),CPPMAT::getRows(invalidChanel,1,j));
+            if(CPPMAT::matrix_equal(piece_together,CPPMAT::creatmatrix_ones(loss_sensor,1))){
+                invalidFlag1[i-1][0]=1;
+                break;
+            }
+        }
+
+    }
+
+    for (int i = 1; i <= row-window1; ++i) {
+        invalidChanel=CPPMAT::creatmatrix_ones(dat1_num,1);
+        for (int k = 1; k <= dat1_num; ++k) {
+            for (int j = i; j <= i+window1-1; ++j) {
+                if(abs(data1[j-1][k-1]-data1[j][k-1])>=thresh1){
+                    invalidChanel[k-1][0]=0;
+                    break;
+                }
+            }
+        }
+        for (int ii = 1; ii <= dat1_num-(loss_sensor-1); ++ii) {
+            if(CPPMAT::matrix_equal(CPPMAT::getRows(invalidChanel,ii,loss_sensor),CPPMAT::creatmatrix_ones(loss_sensor,1))){
+                for (int n = i; n <=i+window1-1 ; ++n) {
+                    invalidFlag2[n-1][0]=1;
+                }
+                break;
+            }
+        }
+        for (int ii = 1; ii <= loss_sensor-1; ++ii) {
+            piece_together=CPPMAT::matrix_overlaying_below(CPPMAT::getRows(invalidChanel,invalidChanel.size()-(loss_sensor-1)+ii,(loss_sensor-1)-ii+1),CPPMAT::getRows(invalidChanel,1,ii));
+            if(CPPMAT::matrix_equal(piece_together,CPPMAT::creatmatrix_ones(loss_sensor,1))){
+                for (int n = i; n <= i+window1-1; ++n) {
+                    invalidFlag2[n-1][0]=1;
+                    break;
+                }
+            }
+        }
+    }
+
+    double N1 = CPPMAT::numOfMember(invalidFlag1,1)+CPPMAT::numOfMember(invalidFlag2,1);
+
+    invalidFlag1=CPPMAT::creatmatrix(row,dat1_num);
+    invalidFlag2=CPPMAT::creatmatrix(row,dat1_num);
+    //超限缺失
+
+    for (int i = 1; i <=row ; ++i) {
+    tempVector=CPPMAT::getRow(data1,i).at(0);
+    for (int ii = 0; ii < tempVector.size(); ++ii) {
+        if((tempVector.at(ii)<lobo_mfl_1)||(tempVector.at(ii)>upbo_mfl_1)){
+            invalidFlag1[i-1][0]=1;
+        }
+    }
+    }
+    //平滑缺失
+    int flag;
+    for (int i = 1; i <= row-window1; ++i) {
+        for (int k = 1; k <= dat1_num; ++k) {
+            flag=1;
+            for (int j = i; j <= i+window1-1; ++j) {
+                if(abs(data1[j-1][k-1]-data1[j][k-1])>=thresh1){
+                    flag=0;
+                    break;
+                }
+            }
+            if(flag==1){
+                for (int n = i; n <= i+window1-1; ++n) {
+                    invalidFlag2[n-1][k-1]=1;
+                }
+            }
+
+        }
+    }
+    double N2=CPPMAT::numOfMember(invalidFlag1,1)+CPPMAT::numOfMember(invalidFlag2,1);
+    double con_loss_1=N1/row;
+    double discon_loss_1=N2/(dat1_num*row);
+    tuple<double,double> result = make_tuple(con_loss_1,discon_loss_1);
+    return result;
+}
+
+vector<vector<double>> BXToolKit::vel(const vector<vector<double>>&mile,const vector<vector<double>>&time,double step){
+    vector<vector<double>> vel_output;
+    vector<double> vel_output_data;
+    int width=1;
+    for(int i=1;i<=step;i++){
+        double temp;
+        if((time.at(1+step-1).at(0)-time.at(0).at(0))==0){
+            if((mile.at(1+step-1).at(0)-mile.at(0).at(0))>0){
+                temp=INT_MAX;
+            }
+            else if ((mile.at(1+step-1).at(0)-mile.at(0).at(0))==0) {
+                temp=0;
+            }else if((mile.at(1+step-1).at(0)-mile.at(0).at(0))<0){
+                temp=INT_MIN;
+            }
+        }
+        else{
+            temp=(mile.at(1+step-1).at(0)-mile.at(0).at(0))/(time.at(1+step-1).at(0)-time.at(0).at(0));
+        }
+
+        if(temp==INT_MAX||temp==INT_MIN||temp<=0){
+            width++;
+        }
+
+        vel_output_data.push_back(temp);
+    }
+    for (int i = 1; i <= mile.size()-step; ++i) {
+        double temp;
+        if((time.at(i+step-1).at(0)-time.at(i-1).at(0))==0){
+            if((mile.at(i+step-1).at(0)-mile.at(i-1).at(0))>0){
+                temp=INT_MAX;
+            }
+            else if ((mile.at(i+step-1).at(0)-mile.at(i-1).at(0))==0) {
+                temp=0;
+            }else if((mile.at(i+step-1).at(0)-mile.at(i-1).at(0))<0){
+                temp=INT_MIN;
+            }
+        }
+        else{
+            temp=(mile.at(i+step-1).at(0)-mile.at(i-1).at(0))/(time.at(i+step-1).at(0)-time.at(i-1).at(0));
+        }
+
+        if(temp==INT_MAX||temp==INT_MIN||temp<=0){
+            width++;
+        }
+        vel_output_data.push_back(temp);
+    }
+
+    vel_output_data=CPPMAT::smooth(vel_output_data,width);
+    vel_output_data[0]=(mile.at(1+step-1).at(0)-mile.at(0).at(0))/(time.at(1+step-1).at(0)-time.at(0).at(0));
+    vel_output=CPPMAT::creatmatrix(vel_output_data.size(),1,vel_output_data);
+
+    return vel_output;
 
 }
 
@@ -809,3 +1052,77 @@ void BXToolKit::writeLog(string logPath, string logData){
     ofs<<asctime(sysLocalTime)+logData<<endl;
     ofs.close();
 }
+
+vector<double> BXToolKit::validana_BX(const vector<vector<double>> data4analysis, const vector<vector<double>> Mile1, const vector<vector<double>> zx1, const vector<vector<double>> qj1, const vector<vector<double>> hx1, const vector<vector<double>> vol1, const vector<vector<double>> temp1, const vector<vector<double>> speed, double licheng_in, double licheng_out, ParaGet parameters){
+
+    vector<vector<double>> Mile,vol,data_BX,zhouxiang,qingjiao,temp,vel;
+    Mile=CPPMAT::getRows(Mile1,licheng_in,licheng_out-licheng_in+1);
+    vol=CPPMAT::getRows(vol1,licheng_in,licheng_out-licheng_in+1);
+    data_BX=CPPMAT::getRows(data4analysis,licheng_in,licheng_out-licheng_in+1);
+    zhouxiang=CPPMAT::getRows(zx1,licheng_in,licheng_out-licheng_in+1);
+    qingjiao=CPPMAT::getRows(qj1,licheng_in,licheng_out-licheng_in+1);
+    temp=CPPMAT::getRows(temp1,licheng_in,licheng_out-licheng_in+1);
+    vel=CPPMAT::getRows(speed,licheng_in,licheng_out-licheng_in+1);
+
+    //判定参数
+    double lobo_vol,upbo_vol,upbo_zhouxiang,lobo_zhouxiang,upbo_qingjiao,lobo_qingjiao,upbo_temp,lobo_temp,upbo_BX,lobo_BX,window_BX,thresh_BX,loss_sensor_BX;
+    lobo_vol=parameters.valpara.lobo_vol;
+    upbo_vol=parameters.valpara.upbo_vol;
+    upbo_zhouxiang=parameters.valpara.upbo_zhouxiang;
+    lobo_zhouxiang=parameters.valpara.lobo_zhouxiang;
+    upbo_qingjiao=parameters.valpara.upbo_qingjiao;
+    lobo_qingjiao=parameters.valpara.lobo_qingjiao;
+    upbo_temp=parameters.valpara.upbo_temp;
+    lobo_temp=parameters.valpara.lobo_temp;
+    upbo_BX=parameters.valpara.upbo_BX;
+    lobo_BX=parameters.valpara.lobo_BX;
+    window_BX=parameters.valpara.window_BX;
+    thresh_BX=parameters.valpara.thresh_BX;
+    loss_sensor_BX=parameters.valpara.loss_sensor_BX;
+
+    // 里程跳变异常 里程只能向下跳 12145   1232345
+    double n_mile,licheng_invalid,licheng_invalid_num,SpeedAverage,SpeedMin,SpeedMax,vol_invalid,vol_ave,temp_invalid,temp_max,temp_min,temp_ave,zhouxiang_invalid,zhouxiang_max,zhouxiang_min,zhouxiang_ave,qingjiao_invalid;
+    vector<vector<double>> mile_diff;
+    vector<double> mile_vector;
+    for (int i = 0; i < Mile.size(); ++i) {
+        mile_vector.push_back(Mile.at(i).at(0));
+    }
+
+    mile_vector=CPPMAT::diff(mile_vector);
+    mile_diff=CPPMAT::creatmatrix(mile_vector.size(),1,mile_vector);
+    n_mile=CPPMAT::numOfMinusMember(mile_diff);
+    licheng_invalid=n_mile/CPPMAT::getsize(Mile);
+    licheng_invalid_num=n_mile;
+
+    //速度均值
+    SpeedAverage=CPPMAT::matrix_mean(vel);
+    SpeedMin=CPPMAT::getMin(vel);
+    SpeedMax=CPPMAT::getMax(vel);
+    // 电压失效率和电压均值 %原始数据，上限，下限
+    vol_invalid=(CPPMAT::numOfMember_lower(vol,lobo_vol)+CPPMAT::numOfMember_larger(vol,upbo_vol))/CPPMAT::getsize(vol);
+    vol_ave=CPPMAT::matrix_mean(vol);
+    //温度失效率和温度极值和温度均值
+    temp_invalid=(CPPMAT::numOfMember_lower(temp,lobo_temp)+CPPMAT::numOfMember_larger(temp,upbo_temp))/CPPMAT::getsize(temp);
+    temp_max=CPPMAT::getMax(temp);
+    temp_min=CPPMAT::getMin(temp);
+    temp_ave=CPPMAT::matrix_mean(temp);
+    //周向角无效帧数和极值和均值
+    zhouxiang_invalid=(CPPMAT::numOfMember_lower(zhouxiang,lobo_zhouxiang)+CPPMAT::numOfMember_larger(zhouxiang,upbo_zhouxiang))/CPPMAT::getsize(zhouxiang);
+    zhouxiang_max=CPPMAT::getMax(zhouxiang);
+    zhouxiang_min=CPPMAT::getMin(zhouxiang);
+    zhouxiang_ave=CPPMAT::matrix_mean(zhouxiang);
+    //倾角无效帧数
+    qingjiao_invalid=(CPPMAT::numOfMember_lower(qingjiao,lobo_qingjiao)+CPPMAT::numOfMember_larger(qingjiao,upbo_qingjiao))/CPPMAT::getsize(qingjiao);
+
+    tuple<double,double> result_mulcha_invalid=BXToolKit::mulcha_invalid(data_BX,lobo_BX,upbo_BX,loss_sensor_BX,window_BX,thresh_BX);
+    double con_loss = get<0>(result_mulcha_invalid);
+    double discon_loss = get<1>(result_mulcha_invalid);
+    vector<double> output{temp_max,temp_min,temp_ave,temp_invalid,
+                licheng_invalid,licheng_invalid_num,
+                zhouxiang_max,zhouxiang_min,zhouxiang_ave,zhouxiang_invalid,
+                qingjiao_invalid,vol_ave,vol_invalid,
+                SpeedAverage,SpeedMin,SpeedMax,con_loss,discon_loss};
+    return output;
+
+}
+

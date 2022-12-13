@@ -42,12 +42,21 @@ public:
     static vector<vector<double>> inverse(const vector<vector<double>> &A);                                                 //矩阵求逆
     static vector<vector<double>> changeRow(const vector<vector<double>>&A,int row, const vector<vector<double>>&B);        //更改行向量
     static vector<vector<double>> changeColumn(const vector<vector<double>>&A,int column, const vector<vector<double>>&B);  //更改列向量
+    static vector<double> smooth(vector<double>,int width);                                                                 //平滑
+    static vector<double> diff(vector<double>);                                                                             //向量求后一项减前一项
     static double matrix_sum (const vector<vector<double>> &A);                                                             //向量求和
     static double matrix_mean (const vector<vector<double>> &A);                                                            //均值
     static double matrix_variance (const vector<vector<double>> &A);                                                        //方差
     static double matrix_standard_deviation (const vector<vector<double>> &A,double flag);                                  //标准差，公式中分母为n-flag
     static double matrix_mid (const vector<vector<double>> &A);                                                             //中位数
-    static bool ismember(const vector<vector<double>> &A, double num);                                                                  //判断是否为矩阵元素
+    static bool ismember(const vector<vector<double>> &A, double num);                                                      //判断是否为矩阵元素
+    static double numOfMember(const vector<vector<double>> &A, double num);                                                 //判断某个相同元素个数
+    static double numOfMember_lower(const vector<vector<double>> &A, double num);                                           //判断小于某元素个数
+    static double numOfMember_larger(const vector<vector<double>> &A, double num);                                          //判断大于某元素个数
+    static double numOfMinusMember(const vector<vector<double>> &A);                                                        //判断负数元素个数
+    static bool matrix_equal(const vector<vector<double>> &A,const vector<vector<double>> &B);                              //判断矩阵相等
+    static double getMin(const vector<vector<double>> &A);                                                                 //获取矩阵最小元素
+    static double getMax(const vector<vector<double>> &A);                                                                 //获取矩阵最大元素
     static double getsize(const vector<vector<double>> &A);                                                                 //获取矩阵元素个数
     static void show_matrix(const vector<vector<double>> &A);                                                               //打印矩阵
 

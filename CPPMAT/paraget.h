@@ -23,7 +23,7 @@ public:
         int mile2_cha;
         int mile3_cha;
         int timechal;
-        int vtime;
+        double vtime;
         int zxchal;
         int qjchal;
         int hxchal;

@@ -20,6 +20,7 @@ int main()
 */
 
     /* ******************     有效性算法调用      ***********************/
+
     string pipesize = "10inch";
     string outPath =  "D:\\ZeYuWorkspace\\bxoutput\\testdata\\analysis";
     string data2hNobase_Path =  "D:\\ZeYuWorkspace\\bxoutput\\testdata\\BX20221125-111613-1_000.dat1IN_data2hNobase.bin";
@@ -32,8 +33,22 @@ int main()
     double Window2 = 0.002; //单位m
     int Flag_inout = 1;
 
-    BXToolKit::DataValidAnalyse(pipesize,data2hNobase_Path,data4analysis_Path,Assis_Path,outPath,Window1,Window2,Pos_in,Pos_out,Flag_valid,Flag_inout);
+    /*
+     * result_DataValidAnalyse输出格式：（按下标取值）
+                    licheng1,temp_max,temp_min,temp_ave,temp_invalid,
+                    licheng_invalid,licheng_invalid_num,
+                    zhouxiang_max,zhouxiang_min,zhouxiang_ave,zhouxiang_invalid,
+                    qingjiao_invalid,vol_ave,vol_invalid,
+                    SpeedAverage,SpeedMin,SpeedMax,con_loss,discon_loss
+    */
+    vector<double> result_DataValidAnalyse;
+    result_DataValidAnalyse=BXToolKit::DataValidAnalyse(pipesize,data2hNobase_Path,data4analysis_Path,Assis_Path,outPath,Window1,Window2,Pos_in,Pos_out,Flag_valid,Flag_inout);
 
+
+
+    /*for (int i = 0; i < result_DataValidAnalyse.size(); ++i) {
+        cout<<result_DataValidAnalyse.at(i)<<endl;
+    }*/
 
 
     //测试circlefit
